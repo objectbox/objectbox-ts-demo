@@ -23,8 +23,8 @@ OBX_model* create_obx_model() {
 		if (obx_model_entity(model, "NamedTimeRange", 1, 3765299694136730253)) break;
 		if (obx_model_property(model, "id", OBXPropertyType(6), 1, 5286436616181640468)) break;
 		if (obx_model_property_flags(model, OBXPropertyFlags(1))) break;
-		if (obx_model_property(model, "begin", OBXPropertyType(6), 2, 6593850490799792041)) break;
-		if (obx_model_property(model, "end", OBXPropertyType(6), 3, 2226587369826141769)) break;
+		if (obx_model_property(model, "begin", OBXPropertyType_Date, 2, 6593850490799792041)) break;
+		if (obx_model_property(model, "end", OBXPropertyType_Date, 3, 2226587369826141769)) break;
 		if (obx_model_property(model, "name", OBXPropertyType(9), 4, 8237102737394490261)) break;
 		if (obx_model_entity_last_property_id(model, 4, 8237102737394490261)) break;
 		
@@ -32,7 +32,8 @@ OBX_model* create_obx_model() {
 		if (obx_model_entity(model, "SensorValues", 2, 6576462802871325567)) break;
 		if (obx_model_property(model, "id", OBXPropertyType(6), 1, 7390723389650851566)) break;
 		if (obx_model_property_flags(model, OBXPropertyFlags(1))) break;
-		if (obx_model_property(model, "time", OBXPropertyType(6), 2, 4045039018130861172)) break;
+		if (obx_model_property(model, "time", OBXPropertyType_Date, 2, 4045039018130861172)) break;
+                if (obx_model_property_flags(model, OBXPropertyFlags_ID_COMPANION)) break;
 		if (obx_model_property(model, "temperatureOutside", OBXPropertyType(8), 3, 1178344585895481685)) break;
 		if (obx_model_property(model, "temperatureInside", OBXPropertyType(8), 4, 803419570723764507)) break;
 		if (obx_model_property(model, "temperatureCpu", OBXPropertyType(8), 5, 4480233319781925090)) break;
