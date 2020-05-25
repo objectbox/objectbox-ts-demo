@@ -49,6 +49,8 @@ OBX_model* create_obx_model() {
 	} while (false);
 
 	if (!successful) {
+		// TODO error handling 
+		// obx_model_error_message(model);
 		obx_model_free(model);
         return NULL;
 	}

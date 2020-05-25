@@ -30,6 +30,7 @@ struct SensorValues {
 #include "flatbuffers/flatbuffers.h"
 
 class NamedTimeRangeSerializer {
+public:
 	/// Write given object to the FlatBufferBuilder
 	static void toFlatBuffer(flatbuffers::FlatBufferBuilder &fbb, const NamedTimeRange& object) {
 		auto offsetname = fbb.CreateString(object.name);
@@ -38,7 +39,9 @@ class NamedTimeRangeSerializer {
 		fbb.TrackField(6, fbb.PushElement<int64_t>(object.begin));
 		fbb.TrackField(8, fbb.PushElement<int64_t>(object.end));
 		fbb.AddOffset(10, offsetname);
-		fbb.EndTable(fbStart);
+		flatbuffers::Offset<flatbuffers::Table> offset;
+        offset.o = fbb.EndTable(fbStart);
+        fbb.Finish(offset);
 	}
 	
 	/// Read an object from a valid FlatBuffer
@@ -58,6 +61,7 @@ class NamedTimeRangeSerializer {
 };
 
 class SensorValuesSerializer {
+public:
 	/// Write given object to the FlatBufferBuilder
 	static void toFlatBuffer(flatbuffers::FlatBufferBuilder &fbb, const SensorValues& object) {
 		flatbuffers::uoffset_t fbStart = fbb.StartTable();
@@ -70,7 +74,9 @@ class SensorValuesSerializer {
 		fbb.TrackField(16, fbb.PushElement<double>(object.loadCpu2));
 		fbb.TrackField(18, fbb.PushElement<double>(object.loadCpu3));
 		fbb.TrackField(20, fbb.PushElement<double>(object.loadCpu4));
-		fbb.EndTable(fbStart);
+		flatbuffers::Offset<flatbuffers::Table> offset;
+        offset.o = fbb.EndTable(fbStart);
+        fbb.Finish(offset);
 	}
 	
 	/// Read an object from a valid FlatBuffer
