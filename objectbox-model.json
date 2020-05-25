@@ -1,0 +1,98 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:3765299694136730253",
+      "lastPropertyId": "4:8237102737394490261",
+      "name": "NamedTimeRange",
+      "properties": [
+        {
+          "id": "1:5286436616181640468",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:6593850490799792041",
+          "name": "begin",
+          "type": 6
+        },
+        {
+          "id": "3:2226587369826141769",
+          "name": "end",
+          "type": 6
+        },
+        {
+          "id": "4:8237102737394490261",
+          "name": "name",
+          "type": 9
+        }
+      ]
+    },
+    {
+      "id": "2:6576462802871325567",
+      "lastPropertyId": "9:6954854995237423885",
+      "name": "SensorValues",
+      "properties": [
+        {
+          "id": "1:7390723389650851566",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:4045039018130861172",
+          "name": "time",
+          "type": 6
+        },
+        {
+          "id": "3:1178344585895481685",
+          "name": "temperatureOutside",
+          "type": 8
+        },
+        {
+          "id": "4:803419570723764507",
+          "name": "temperatureInside",
+          "type": 8
+        },
+        {
+          "id": "5:4480233319781925090",
+          "name": "temperatureCpu",
+          "type": 8
+        },
+        {
+          "id": "6:5622850065863016031",
+          "name": "loadCpu1",
+          "type": 8
+        },
+        {
+          "id": "7:8376917843086081746",
+          "name": "loadCpu2",
+          "type": 8
+        },
+        {
+          "id": "8:1972061339506399854",
+          "name": "loadCpu3",
+          "type": 8
+        },
+        {
+          "id": "9:6954854995237423885",
+          "name": "loadCpu4",
+          "type": 8
+        }
+      ]
+    }
+  ],
+  "lastEntityId": "2:6576462802871325567",
+  "lastIndexId": "",
+  "lastRelationId": "",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": [],
+  "version": 1
+}

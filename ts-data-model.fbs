@@ -1,0 +1,27 @@
+//namespace objectbox.tsdemo;
+
+/// Time series object
+table SensorValues {
+    id: ulong;
+
+    time: long;
+
+    temperatureOutside: double;
+    temperatureInside: double;
+
+    temperatureCpu: double;
+    loadCpu1: double;
+    loadCpu2: double;
+    loadCpu3: double;
+    loadCpu4: double;
+}
+
+table NamedTimeRange {
+    id: ulong;
+
+    begin: long;
+    end: long;
+
+    name: string;
+}
+

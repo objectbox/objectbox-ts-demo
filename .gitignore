@@ -1,0 +1,55 @@
+.DS_Store
+
+# IDE
+.idea/
+*.iml
+.vscode
+.vs/
+
+# Gradle & Java build
+.gradle
+build/
+bin/
+gen/
+target/
+out/
+classes/
+
+# Local build properties
+build.properties
+local.properties
+
+### CMake build files
+CMakeFiles/
+CMakeCache.txt
+Makefile
+.externalNativeBuild
+.cxx
+
+#CLion cmake build files
+/cmake-build-*/
+
+# Native libs
+objectbox*.dll
+libobjectbox*.so
+libobjectbox*.dylib
+
+### Build script
+/Release/
+/Debug/
+
+### DB files
+data.mdb
+lock.mdb
+
+## Backups
+.gitignore~
+*.txt~
+default.json.bak
+
+# Misc
+callgrind.out.*
+/captures/
+*valgrind.log
+/native-debug-symbols/
+*test.log
