@@ -22,10 +22,27 @@ obx_err printError(const char* hint = nullptr) {
 
 obx_id put(OBX_store* store, flatbuffers::FlatBufferBuilder& fbb,
            const NamedTimeRange& namedTimeRange) {
+    fbb.Clear();
     NamedTimeRangeSerializer::toFlatBuffer(fbb, namedTimeRange);
     OBX_box* box = obx_box(store, 1);
     if (box == nullptr) printErrorAndExit("box");
     return obx_box_put_object(box, fbb.GetBufferPointer(), fbb.GetSize(), OBXPutMode_PUT);
+}
+
+void put(OBX_store* store, flatbuffers::FlatBufferBuilder& fbb,
+         const std::vector<SensorValues>& values) {
+    OBX_box* box = obx_box(store, 2);
+    if (box == nullptr) printErrorAndExit("box2");
+
+    OBX_txn* txn = obx_txn_write(store);
+    if (txn == nullptr) printErrorAndExit("write transaction");
+    for (auto& value : values) {
+        fbb.Clear();
+        SensorValuesSerializer::toFlatBuffer(fbb, value);
+        obx_id id = obx_box_put_object(box, fbb.GetBufferPointer(), fbb.GetSize(), OBXPutMode_PUT);
+        if (id == 0) printErrorAndExit("put");
+    }
+    obx_txn_success(txn);
 }
 
 std::unique_ptr<NamedTimeRange> get(OBX_store* store, obx_id id) {
@@ -60,6 +77,7 @@ int main(int argc, char* args[]) {
     if (!model) printErrorAndExit("model");
 
     OBX_store_options* opt = obx_opt();
+    obx_opt_max_db_size_in_kb(opt, 10*1024*1024);
     obx_opt_model(opt, model);
     OBX_store* store = obx_store_open(opt);
     if (!store) printErrorAndExit("store");
@@ -69,6 +87,17 @@ int main(int argc, char* args[]) {
     flatbuffers::FlatBufferBuilder fbb;
 
     int64_t now = millisSinceEpoch();
+
+    int dataCount = 100000;
+    std::vector<SensorValues> values;
+    values.reserve(dataCount);
+    for (int i = 0; i < dataCount; ++i) {
+        double d = (i % 2000) - 1000 * 0.005;
+        SensorValues sensorValues{OBX_ID_NEW, now - 1000 + i, 19.5 + d, 23.3 + d, 42.75 + d,
+                                  0.80 - d,   0.7 - d,        0.6 - d,  0.5 - d};
+        values.emplace_back(sensorValues);
+    }
+    put(store, fbb, values);
 
     NamedTimeRange namedTimeRange{OBX_ID_NEW, now - 1000, now + 1000, "green"};
     obx_id id = put(store, fbb, namedTimeRange);
