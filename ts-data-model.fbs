@@ -4,6 +4,7 @@
 table SensorValues {
     id: ulong;
 
+    /// objectbox:id-companion,date
     time: long;
 
     temperatureOutside: double;

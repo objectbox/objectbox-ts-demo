@@ -3,8 +3,8 @@
 #ifndef OBJECTBOX_MODEL_H
 #define OBJECTBOX_MODEL_H
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <cstdbool>
+#include <cstdint>
 
 #include "objectbox.h"
 
@@ -12,50 +12,45 @@
 extern "C" {
 #endif
 
-// TODO property flags, relations, indexes
-OBX_model* create_obx_model() {
+inline OBX_model* create_obx_model() {
     OBX_model* model = obx_model();
     if (!model) return NULL;
 
-	bool successful = false;
-	do {
-		// NamedTimeRange
-		if (obx_model_entity(model, "NamedTimeRange", 1, 3765299694136730253)) break;
-		if (obx_model_property(model, "id", OBXPropertyType(6), 1, 5286436616181640468)) break;
-		if (obx_model_property_flags(model, OBXPropertyFlags(1))) break;
-		if (obx_model_property(model, "begin", OBXPropertyType_Date, 2, 6593850490799792041)) break;
-		if (obx_model_property(model, "end", OBXPropertyType_Date, 3, 2226587369826141769)) break;
-		if (obx_model_property(model, "name", OBXPropertyType(9), 4, 8237102737394490261)) break;
-		if (obx_model_entity_last_property_id(model, 4, 8237102737394490261)) break;
-		
-		// SensorValues
-		if (obx_model_entity(model, "SensorValues", 2, 6576462802871325567)) break;
-		if (obx_model_property(model, "id", OBXPropertyType(6), 1, 7390723389650851566)) break;
-		if (obx_model_property_flags(model, OBXPropertyFlags(1))) break;
-		if (obx_model_property(model, "time", OBXPropertyType_Date, 2, 4045039018130861172)) break;
-                if (obx_model_property_flags(model, OBXPropertyFlags_ID_COMPANION)) break;
-		if (obx_model_property(model, "temperatureOutside", OBXPropertyType(8), 3, 1178344585895481685)) break;
-		if (obx_model_property(model, "temperatureInside", OBXPropertyType(8), 4, 803419570723764507)) break;
-		if (obx_model_property(model, "temperatureCpu", OBXPropertyType(8), 5, 4480233319781925090)) break;
-		if (obx_model_property(model, "loadCpu1", OBXPropertyType(8), 6, 5622850065863016031)) break;
-		if (obx_model_property(model, "loadCpu2", OBXPropertyType(8), 7, 8376917843086081746)) break;
-		if (obx_model_property(model, "loadCpu3", OBXPropertyType(8), 8, 1972061339506399854)) break;
-		if (obx_model_property(model, "loadCpu4", OBXPropertyType(8), 9, 6954854995237423885)) break;
-		if (obx_model_entity_last_property_id(model, 9, 6954854995237423885)) break;
-		
+    bool successful = false;
+    do {
+        if (obx_model_entity(model, "namedtimerange", 1, 3765299694136730253)) break;
+        if (obx_model_property(model, "id", OBXPropertyType_Long, 1, 5286436616181640468)) break;
+        if (obx_model_property_flags(model, OBXPropertyFlags_ID)) break;
+        if (obx_model_property(model, "begin", OBXPropertyType_Long, 2, 6593850490799792041)) break;
+        if (obx_model_property(model, "end", OBXPropertyType_Long, 3, 2226587369826141769)) break;
+        if (obx_model_property(model, "name", OBXPropertyType_String, 4, 8237102737394490261)) break;
+        if (obx_model_entity_last_property_id(model, 4, 8237102737394490261)) break;
+        
+        if (obx_model_entity(model, "sensorvalues", 2, 6576462802871325567)) break;
+        if (obx_model_property(model, "id", OBXPropertyType_Long, 1, 7390723389650851566)) break;
+        if (obx_model_property_flags(model, OBXPropertyFlags_ID)) break;
+        if (obx_model_property(model, "time", OBXPropertyType_Date, 2, 4045039018130861172)) break;
+        if (obx_model_property_flags(model, OBXPropertyFlags_ID_COMPANION)) break;
+        if (obx_model_property(model, "temperatureoutside", OBXPropertyType_Double, 3, 1178344585895481685)) break;
+        if (obx_model_property(model, "temperatureinside", OBXPropertyType_Double, 4, 803419570723764507)) break;
+        if (obx_model_property(model, "temperaturecpu", OBXPropertyType_Double, 5, 4480233319781925090)) break;
+        if (obx_model_property(model, "loadcpu1", OBXPropertyType_Double, 6, 5622850065863016031)) break;
+        if (obx_model_property(model, "loadcpu2", OBXPropertyType_Double, 7, 8376917843086081746)) break;
+        if (obx_model_property(model, "loadcpu3", OBXPropertyType_Double, 8, 1972061339506399854)) break;
+        if (obx_model_property(model, "loadcpu4", OBXPropertyType_Double, 9, 6954854995237423885)) break;
+        if (obx_model_entity_last_property_id(model, 9, 6954854995237423885)) break;
+        obx_model_last_entity_id(model, 2, 6576462802871325567);
+        successful = true;
+    } while (false);
 
-		obx_model_last_entity_id(model, 2, 6576462802871325567);
-		successful = true;
-	} while (false);
-
-	if (!successful) {
-		// TODO error handling 
-		// obx_model_error_message(model);
-		obx_model_free(model);
+    if (!successful) {
+        // TODO error handling 
+        // obx_model_error_message(model);
+        obx_model_free(model);
         return NULL;
-	}
+    }
 
-	return model;
+    return model;
 }
 
 #ifdef __cplusplus
