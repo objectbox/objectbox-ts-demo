@@ -4,11 +4,14 @@
 #define TS_DATA_MODEL_OBX_H
 
 #include <cstdint>
-#include <vector>
 #include <string>
+#include <vector>
 
+#include "flatbuffers/flatbuffers.h"
 #include "objectbox.h"
 
+namespace objectbox {
+namespace tsdemo {
 struct NamedTimeRange {
     uint64_t id;
     int64_t begin;
@@ -24,6 +27,55 @@ struct NamedTimeRange_ {
     static const obx_schema_id name = 4;
 };
 
+class NamedTimeRangeSerializer {
+public:
+    /// Write given object to the FlatBufferBuilder
+    static void toFlatBuffer(flatbuffers::FlatBufferBuilder& fbb, const NamedTimeRange& object) {
+        fbb.Clear();
+        auto offsetname = fbb.CreateString(object.name);
+        flatbuffers::uoffset_t fbStart = fbb.StartTable();
+        fbb.TrackField(4, fbb.PushElement<uint64_t>(object.id));
+        fbb.TrackField(6, fbb.PushElement<int64_t>(object.begin));
+        fbb.TrackField(8, fbb.PushElement<int64_t>(object.end));
+        fbb.AddOffset(10, offsetname);
+        flatbuffers::Offset<flatbuffers::Table> offset;
+        offset.o = fbb.EndTable(fbStart);
+        fbb.Finish(offset);
+    }
+
+    /// Read an object from a valid FlatBuffer
+    static NamedTimeRange fromFlatBuffer(const void* data, size_t size) {
+        NamedTimeRange object;
+        fromFlatBuffer(data, size, object);
+        return object;
+    }
+
+    /// Read an object from a valid FlatBuffer
+    static std::unique_ptr<NamedTimeRange> newFromFlatBuffer(const void* data, size_t size) {
+        auto object = std::unique_ptr<NamedTimeRange>(new NamedTimeRange());
+        fromFlatBuffer(data, size, *object);
+        return object;
+    }
+
+    /// Read an object from a valid FlatBuffer
+    static void fromFlatBuffer(const void* data, size_t size, NamedTimeRange& outObject) {
+        const auto* table = flatbuffers::GetRoot<flatbuffers::Table>(data);
+        assert(table);
+        outObject.id = table->GetField<uint64_t>(4, 0);
+        outObject.begin = table->GetField<int64_t>(6, 0);
+        outObject.end = table->GetField<int64_t>(8, 0);
+        {
+            auto* ptr = table->GetPointer<const flatbuffers::Vector<char>*>(10);
+            if (ptr) outObject.name.assign(ptr->begin(), ptr->end());
+        }
+        
+    }
+};
+}  // namespace tsdemo
+}  // namespace objectbox
+
+namespace objectbox {
+namespace tsdemo {
 struct SensorValues {
     uint64_t id;
     int64_t time;
@@ -49,58 +101,10 @@ struct SensorValues_ {
     static const obx_schema_id loadCpu4 = 9;
 };
 
-
-#include "flatbuffers/flatbuffers.h"
-
-class NamedTimeRangeSerializer {
-public:
-    /// Write given object to the FlatBufferBuilder
-    static void toFlatBuffer(flatbuffers::FlatBufferBuilder &fbb, const NamedTimeRange& object) {
-        fbb.Clear();
-        auto offsetname = fbb.CreateString(object.name);
-        flatbuffers::uoffset_t fbStart = fbb.StartTable();
-        fbb.TrackField(4, fbb.PushElement<uint64_t>(object.id));
-        fbb.TrackField(6, fbb.PushElement<int64_t>(object.begin));
-        fbb.TrackField(8, fbb.PushElement<int64_t>(object.end));
-        fbb.AddOffset(10, offsetname);
-        flatbuffers::Offset<flatbuffers::Table> offset;
-        offset.o = fbb.EndTable(fbStart);
-        fbb.Finish(offset);
-    }
-    
-    /// Read an object from a valid FlatBuffer
-    static NamedTimeRange fromFlatBuffer(const void* data, size_t size) {
-        NamedTimeRange object;
-        fromFlatBuffer(data, size, object);
-        return object;
-    }
-
-    /// Read an object from a valid FlatBuffer
-    static std::unique_ptr<NamedTimeRange> newFromFlatBuffer(const void* data, size_t size) {
-        auto object = std::unique_ptr<NamedTimeRange>(new NamedTimeRange());
-        fromFlatBuffer(data, size, *object);
-        return object;
-    }
-
-    /// Read an object from a valid FlatBuffer
-    static void fromFlatBuffer(const void* data, size_t size, NamedTimeRange& outObject) {
-        const auto* table = flatbuffers::GetRoot<flatbuffers::Table>(data);
-        assert(table);
-        outObject.id = table->GetField<uint64_t>(4, 0);
-        outObject.begin = table->GetField<int64_t>(6, 0);
-        outObject.end = table->GetField<int64_t>(8, 0);
-        {
-            auto* ptr = table->GetPointer<const flatbuffers::Vector<char>*>(10);
-            if (ptr) outObject.name.assign(ptr->begin(), ptr->end()); 
-        }
-        
-    }
-};
-
 class SensorValuesSerializer {
 public:
     /// Write given object to the FlatBufferBuilder
-    static void toFlatBuffer(flatbuffers::FlatBufferBuilder &fbb, const SensorValues& object) {
+    static void toFlatBuffer(flatbuffers::FlatBufferBuilder& fbb, const SensorValues& object) {
         fbb.Clear();
         flatbuffers::uoffset_t fbStart = fbb.StartTable();
         fbb.TrackField(4, fbb.PushElement<uint64_t>(object.id));
@@ -116,7 +120,7 @@ public:
         offset.o = fbb.EndTable(fbStart);
         fbb.Finish(offset);
     }
-    
+
     /// Read an object from a valid FlatBuffer
     static SensorValues fromFlatBuffer(const void* data, size_t size) {
         SensorValues object;
@@ -147,5 +151,7 @@ public:
         
     }
 };
+}  // namespace tsdemo
+}  // namespace objectbox
 
-#endif // TS_DATA_MODEL_OBX_H
+#endif  // TS_DATA_MODEL_OBX_H

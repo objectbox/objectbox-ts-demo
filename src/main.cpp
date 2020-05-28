@@ -6,6 +6,8 @@
 #include "objectbox.h"
 #include "ts-data-model.obx.h"
 
+using namespace objectbox::tsdemo;
+
 int64_t millisSinceEpoch() {
     auto time = std::chrono::system_clock::now().time_since_epoch();
     return std::chrono::duration_cast<std::chrono::milliseconds>(time).count();
@@ -77,7 +79,7 @@ int main(int argc, char* args[]) {
     if (!model) printErrorAndExit("model");
 
     OBX_store_options* opt = obx_opt();
-    obx_opt_max_db_size_in_kb(opt, 10*1024*1024);
+    obx_opt_max_db_size_in_kb(opt, 10 * 1024 * 1024);
     obx_opt_model(opt, model);
     OBX_store* store = obx_store_open(opt);
     if (!store) printErrorAndExit("store");

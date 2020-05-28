@@ -1,4 +1,4 @@
-//namespace objectbox.tsdemo;
+namespace objectbox.tsdemo;
 
 /// Time series object
 table SensorValues {
