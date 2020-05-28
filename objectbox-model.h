@@ -25,7 +25,7 @@ inline OBX_model* create_obx_model() {
         if (obx_model_property(model, "end", OBXPropertyType_Long, 3, 2226587369826141769)) break;
         if (obx_model_property(model, "name", OBXPropertyType_String, 4, 8237102737394490261)) break;
         if (obx_model_entity_last_property_id(model, 4, 8237102737394490261)) break;
-        
+
         if (obx_model_entity(model, "sensorvalues", 2, 6576462802871325567)) break;
         if (obx_model_property(model, "id", OBXPropertyType_Long, 1, 7390723389650851566)) break;
         if (obx_model_property_flags(model, OBXPropertyFlags_ID)) break;
@@ -44,7 +44,7 @@ inline OBX_model* create_obx_model() {
     } while (false);
 
     if (!successful) {
-        // TODO error handling 
+        // TODO error handling - return model all the time and expect the caller to free on error
         // obx_model_error_message(model);
         obx_model_free(model);
         return NULL;

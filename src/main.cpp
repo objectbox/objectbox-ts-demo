@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 
+#include "objectbox-ext.h"
 #include "objectbox-model.h"
 #include "objectbox.h"
 #include "ts-data-model.obx.h"
@@ -74,6 +75,12 @@ std::unique_ptr<NamedTimeRange> get(OBX_store* store, obx_id id) {
 int main(int argc, char* args[]) {
     std::cout << "ObjectBox TS demo using version " << obx_version_string()
               << "(core: " << obx_version_core_string() << ")" << std::endl;
+
+    {
+        objectbox::Store store(create_obx_model());
+        objectbox::Box<> box;
+    }
+    return 1;
 
     OBX_model* model = create_obx_model();
     if (!model) printErrorAndExit("model");
