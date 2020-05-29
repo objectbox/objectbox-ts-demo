@@ -18,8 +18,9 @@ struct NamedTimeRange {
     int64_t end;
     std::string name;
 
-    static constexpr obx_schema_id entityId() { return 1; }
+    void setObjectId(obx_id newId) { id = newId; }
 
+    static constexpr obx_schema_id entityId() { return 1; }
 
     /// Write given object to the FlatBufferBuilder
     static void toFlatBuffer(flatbuffers::FlatBufferBuilder& fbb, const NamedTimeRange& object) {
@@ -69,7 +70,6 @@ struct NamedTimeRange_ {
     static const obx_schema_id begin = 2;
     static const obx_schema_id end = 3;
     static const obx_schema_id name = 4;
-
 };
 
 }  // namespace tsdemo
@@ -87,6 +87,8 @@ struct SensorValues {
     double loadCpu2;
     double loadCpu3;
     double loadCpu4;
+
+    void setObjectId(obx_id newId) { id = newId; }
 
     static constexpr obx_schema_id entityId() { return 2; }
 
@@ -149,7 +151,6 @@ struct SensorValues_ {
     static const obx_schema_id loadCpu2 = 7;
     static const obx_schema_id loadCpu3 = 8;
     static const obx_schema_id loadCpu4 = 9;
-
 };
 }  // namespace tsdemo
 }  // namespace objectbox

@@ -42,6 +42,7 @@ int main(int argc, char* args[]) {
     NamedTimeRange namedTimeRange{OBX_ID_NEW, now - 1000, now + 1000, "green"};
     obx_id id = boxNTR.put(namedTimeRange);
     std::cout << "New ID: " << id << std::endl;
+    std::cout << "Object ID set to: " << namedTimeRange.id << std::endl;
     std::cout << "Total count: " << boxNTR.count() << std::endl;
 
     std::unique_ptr<NamedTimeRange> object = boxNTR.get(id);
