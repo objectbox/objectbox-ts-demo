@@ -28,6 +28,11 @@ public:
     int code() const { return code_; }
 };
 
+class NotFoundException : public std::exception {};
+
+/// Transactions can be started in read (only) or write mode.
+enum class TxMode { READ, WRITE };
+
 namespace {
 #define OBJECTBOX_VERIFY_ARGUMENT(c) \
     ((c) ? (void) (0) : throw std::invalid_argument(std::string("Argument validation failed: #c")))
@@ -35,15 +40,48 @@ namespace {
 #define OBJECTBOX_VERIFY_STATE(c) \
     ((c) ? (void) (0) : throw std::runtime_error(std::string("State condition failed: #c")))
 
-void checkPtrOrThrow(void* ptr) {
-    if (ptr) return;
+[[noreturn]] void throwLastError() {
     throw Exception(obx_last_error_message(), obx_last_error_code());
 }
+
+void checkErrOrThrow(obx_err err) {
+    if (err == OBX_SUCCESS) return;
+    if (err == OBX_NOT_FOUND) throw NotFoundException();
+    throwLastError();
+}
+void checkPtrOrThrow(void* ptr, const std::string& context) {
+    if (!ptr) throw Exception(context + ": " + obx_last_error_message(), obx_last_error_code());
+}
+
+/// Internal RAII transaction wrapper
+class Transaction {
+    TxMode mode_;
+    OBX_txn* txn_;
+    bool successful_ = true;
+
+public:
+    explicit Transaction(TxMode mode, OBX_store* cStore)
+        : mode_(mode), txn_(mode == TxMode::WRITE ? obx_txn_write(cStore) : obx_txn_read(cStore)) {
+        checkPtrOrThrow(txn_, "can't start transaction");
+    }
+    virtual ~Transaction() {
+        obx_err err = 0;
+        if (mode_ == TxMode::WRITE) {
+            err = obx_txn_mark_success(txn_, successful_);
+        }
+        obx_err err2 = obx_txn_close(txn_);
+        // TODO is it good idea to (potentially) throw here?
+        checkErrOrThrow(err);
+        checkErrOrThrow(err2);
+    }
+    void fail() { successful_ = false; }
+};
 }  // namespace
 
 template <class EntityT>
 class Box;
 
+// TODO maybe Box vending function?
 class Store {
     OBX_store* cStore_;
 
@@ -65,36 +103,77 @@ public:
         }
 
         OBX_store_options* opt = obx_opt();
-        checkPtrOrThrow(opt);
+        checkPtrOrThrow(opt, "can't create store options");
         obx_opt_max_db_size_in_kb(opt, 10 * 1024 * 1024);
         obx_opt_model(opt, model);
-        checkPtrOrThrow(cStore_ = obx_store_open(opt));
+        checkPtrOrThrow(cStore_ = obx_store_open(opt), "can't open store");
+    }
+
+    virtual ~Store() { obx_store_close(cStore_); }
+
+    /// Executes a given function inside a transaction.
+    template <typename FN>
+    auto runInTransaction(TxMode mode, FN fn) -> decltype(fn()) {
+        Transaction txn(mode, cStore_);
+        try {
+            return fn();
+        } catch (...) {
+            txn.fail();
+            throw;
+        }
     }
 };
 
-template <class EntityT>
-class EntityBinding {
-    /// Write given object to the FlatBufferBuilder
-    static void toFlatBuffer(flatbuffers::FlatBufferBuilder& fbb, const EntityT& object);
-
-    /// Read an object from a valid FlatBuffer
-    static EntityT fromFlatBuffer(const void* data, size_t size);
-
-    /// Read an object from a valid FlatBuffer
-    static void fromFlatBuffer(const void* data, size_t size, EntityT& outObject);
-};
+namespace {
+thread_local flatbuffers::FlatBufferBuilder fbb;
+}
 
 template <class EntityT>
 class Box {
     OBX_box* cBox_;
+    Store& store_;
 
 public:
-    // TODO how to do the initialization nicely, e.g. store.boxFor(entity)?
-    Box(Store& store, obx_schema_id entityId) {
-        OBJECTBOX_VERIFY_ARGUMENT(entityId > 0);
-        checkPtrOrThrow(cBox_ = obx_box(store.cStore_, entityId));
+    explicit Box(Store& store) : store_(store), cBox_(obx_box(store.cStore_, EntityT::entityId())) {
+        checkPtrOrThrow(cBox_, "can't create box");
     }
-    void get() {  // EntityBinding<EntityT>::fromFlatBuffer(data, data.size);
+
+    // TODO return type so that we can support c++11
+    std::unique_ptr<EntityT> get(obx_id id) {
+        Transaction txn(TxMode::READ, store_.cStore_);
+        void* data = nullptr;
+        size_t size = 0;
+        checkErrOrThrow(obx_box_get(cBox_, id, &data, &size));
+        return EntityT::newFromFlatBuffer(data, size);
+    }
+
+    obx_id put(const EntityT& object) {
+        Transaction txn(TxMode::WRITE, store_.cStore_);
+        return put(txn, object);
+    }
+
+    void put(const std::vector<EntityT>& objects) {
+        Transaction txn(TxMode::WRITE, store_.cStore_);
+        for (auto& object : objects) {
+            put(txn, object);
+        }
+    }
+
+    uint64_t count() {
+        uint64_t count;
+        checkErrOrThrow(obx_box_count(cBox_, 0, &count));
+        return count;
+    }
+
+private:
+    template <typename T>
+    obx_id put(Transaction& txn, const T& object) {
+        fbb.Clear();
+        EntityT::toFlatBuffer(fbb, object);
+        obx_id id =
+            obx_box_put_object(cBox_, fbb.GetBufferPointer(), fbb.GetSize(), OBXPutMode_PUT);
+        if (id == 0) throwLastError();
+        return id;
     }
 };
 
