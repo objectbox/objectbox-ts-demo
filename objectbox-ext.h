@@ -112,15 +112,14 @@ public:
 class Transaction {
     OBX_txn* cTxn_;
     TxMode mode_;
-    const std::thread::id threadId_;
     bool successful_ = false;
     bool closed_ = false;
 
 public:
     explicit Transaction(TxMode mode, Store& store)
         : mode_(mode),
-          cTxn_(mode == TxMode::WRITE ? obx_txn_write(store.cStore_) : obx_txn_read(store.cStore_)),
-          threadId_(std::this_thread::get_id()) {
+          cTxn_(mode == TxMode::WRITE ? obx_txn_write(store.cStore_)
+                                      : obx_txn_read(store.cStore_)) {
         checkPtrOrThrow(cTxn_, "can't start transaction");
     }
 
@@ -132,6 +131,8 @@ public:
     /// Delete because the default copy constructor can break things (i.e. a Transaction can not
     /// be copied).
     Transaction(Transaction&) = delete;
+
+    OBX_txn* cPtr() const { return cTxn_; }
 
     /// "Finishes" this write transaction successfully; performs a commit if this is the top level
     /// transaction and all inner transactions (if any) were also successful. This object will also
@@ -169,8 +170,20 @@ private:
 };
 
 namespace {
+// Internal RAII cursor wrapper
+struct Cursor {
+    OBX_cursor* cCursor_;
+
+    explicit Cursor(Transaction& tx, obx_schema_id entityId)
+        : cCursor_(obx_cursor(tx.cPtr(), entityId)) {
+        checkPtrOrThrow(cCursor_, "can't open a cursor");
+    }
+
+    virtual ~Cursor() { obx_cursor_close(cCursor_); }
+};
+
 thread_local flatbuffers::FlatBufferBuilder fbb;
-}
+}  // namespace
 
 template <class EntityT>
 class Box {
@@ -186,52 +199,55 @@ public:
     /// @throws
     /// @return an object pointer or nullptr if the object doesn't exist
     std::unique_ptr<EntityT> get(obx_id id) {
-        Transaction txn(TxMode::READ, store_);
+        auto object = std::unique_ptr<EntityT>(new EntityT());
+        if (!get(id, *object)) return nullptr;
+        return object;
+    }
+
+    bool get(obx_id id, EntityT& outObject) {
+        Transaction tx(TxMode::READ, store_);
         void* data = nullptr;
         size_t size = 0;
         obx_err err = obx_box_get(cBox_, id, &data, &size);
-        if (err == OBX_NOT_FOUND) return nullptr;
+        if (err == OBX_NOT_FOUND) return false;
         checkErrOrThrow(err);
-        return EntityT::newFromFlatBuffer(data, size);
+        EntityT::fromFlatBuffer(data, size, outObject);
+        return true;
     }
-
-//    // TODO
-//    bool get(obx_id id, EntityT& outObject) {
-//        Transaction txn(TxMode::READ, store_);
-//        void* data = nullptr;
-//        size_t size = 0;
-//        obx_err err = obx_box_get(cBox_, id, &data, &size);
-//        if (err == OBX_NOT_FOUND) return nullptr;
-//        return EntityT::newFromFlatBuffer(data, size);
-//    }
 
     obx_id put(EntityT& object) {
-        Transaction txn(TxMode::WRITE, store_);
-        obx_id id = put(txn, object);
-        txn.success();
-        return id;
-    }
-
-    void put(std::vector<EntityT>& objects, std::vector<obx_id>* outIds = nullptr) {  // TODO
-        Transaction txn(TxMode::WRITE, store_);
-        for (auto& object : objects) {
-            put(txn, object);
-        }
-        txn.success();
-    }
-
-    uint64_t count(uint64_t limit = 0) {  // TODO
-        uint64_t count;
-        checkErrOrThrow(obx_box_count(cBox_, 0, &count));
-        return count;
-    }
-
-private:
-    obx_id put(Transaction& txn, EntityT& object) {
         fbb.Clear();
         EntityT::toFlatBuffer(fbb, object);
         obx_id id =
             obx_box_put_object(cBox_, fbb.GetBufferPointer(), fbb.GetSize(), OBXPutMode_PUT);
+        if (id == 0) throwLastError();
+        object.setObjectId(id);
+        return id;
+    }
+
+    void put(std::vector<EntityT>& objects, std::vector<obx_id>* outIds = nullptr) {
+        Transaction tx(TxMode::WRITE, store_);
+        Cursor cursor(tx, EntityT::entityId());
+
+        if (outIds) outIds->reserve(objects.size());  // TODO should we clear previous contents?
+        for (auto& object : objects) {
+            obx_id id = cursorPut(cursor, object);
+            if (outIds) outIds->push_back(id);
+        }
+        tx.success();
+    }
+
+    uint64_t count(uint64_t limit = 0) {
+        uint64_t count;
+        checkErrOrThrow(obx_box_count(cBox_, limit, &count));
+        return count;
+    }
+
+private:
+    obx_id cursorPut(Cursor& cursor, EntityT& object) {
+        fbb.Clear();
+        EntityT::toFlatBuffer(fbb, object);
+        obx_id id = obx_cursor_put_object(cursor.cCursor_, fbb.GetBufferPointer(), fbb.GetSize());
         if (id == 0) throwLastError();
         object.setObjectId(id);
         return id;

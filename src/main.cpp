@@ -38,6 +38,7 @@ int main(int argc, char* args[]) {
         values.emplace_back(sensorValues);
     }
     boxSV.put(values);
+    std::cout << "Time taken: " << millisSinceEpoch() - now << " ms" << std::endl;
 
     NamedTimeRange namedTimeRange{OBX_ID_NEW, now - 1000, now + 1000, "green"};
     obx_id id = boxNTR.put(namedTimeRange);
