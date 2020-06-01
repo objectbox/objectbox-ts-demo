@@ -17,10 +17,19 @@ struct NamedTimeRange {
     int64_t begin;
     int64_t end;
     std::string name;
+};
 
-    void setObjectId(obx_id newId) { id = newId; }
+struct NamedTimeRange_ {
+    static const obx_schema_id id = 1;
+    static const obx_schema_id begin = 2;
+    static const obx_schema_id end = 3;
+    static const obx_schema_id name = 4;
 
     static constexpr obx_schema_id entityId() { return 1; }
+
+    static NamedTimeRange entityType();
+
+    static void setObjectId(NamedTimeRange& object, obx_id newId) { object.id = newId; }
 
     /// Write given object to the FlatBufferBuilder
     static void toFlatBuffer(flatbuffers::FlatBufferBuilder& fbb, const NamedTimeRange& object) {
@@ -61,17 +70,9 @@ struct NamedTimeRange {
             auto* ptr = table->GetPointer<const flatbuffers::Vector<char>*>(10);
             if (ptr) outObject.name.assign(ptr->begin(), ptr->end());
         }
+        
     }
 };
-
-struct NamedTimeRange_ {
-    static const obx_schema_id ENTITY_ID = 1;
-    static const obx_schema_id id = 1;
-    static const obx_schema_id begin = 2;
-    static const obx_schema_id end = 3;
-    static const obx_schema_id name = 4;
-};
-
 }  // namespace tsdemo
 }  // namespace objectbox
 
@@ -87,10 +88,24 @@ struct SensorValues {
     double loadCpu2;
     double loadCpu3;
     double loadCpu4;
+};
 
-    void setObjectId(obx_id newId) { id = newId; }
+struct SensorValues_ {
+    static const obx_schema_id id = 1;
+    static const obx_schema_id time = 2;
+    static const obx_schema_id temperatureOutside = 3;
+    static const obx_schema_id temperatureInside = 4;
+    static const obx_schema_id temperatureCpu = 5;
+    static const obx_schema_id loadCpu1 = 6;
+    static const obx_schema_id loadCpu2 = 7;
+    static const obx_schema_id loadCpu3 = 8;
+    static const obx_schema_id loadCpu4 = 9;
 
     static constexpr obx_schema_id entityId() { return 2; }
+
+    static SensorValues entityType();
+
+    static void setObjectId(SensorValues& object, obx_id newId) { object.id = newId; }
 
     /// Write given object to the FlatBufferBuilder
     static void toFlatBuffer(flatbuffers::FlatBufferBuilder& fbb, const SensorValues& object) {
@@ -137,20 +152,8 @@ struct SensorValues {
         outObject.loadCpu2 = table->GetField<double>(16, 0.0);
         outObject.loadCpu3 = table->GetField<double>(18, 0.0);
         outObject.loadCpu4 = table->GetField<double>(20, 0.0);
+        
     }
-};
-
-struct SensorValues_ {
-    static const obx_schema_id ENTITY_ID = 2;
-    static const obx_schema_id id = 1;
-    static const obx_schema_id time = 2;
-    static const obx_schema_id temperatureOutside = 3;
-    static const obx_schema_id temperatureInside = 4;
-    static const obx_schema_id temperatureCpu = 5;
-    static const obx_schema_id loadCpu1 = 6;
-    static const obx_schema_id loadCpu2 = 7;
-    static const obx_schema_id loadCpu3 = 8;
-    static const obx_schema_id loadCpu4 = 9;
 };
 }  // namespace tsdemo
 }  // namespace objectbox

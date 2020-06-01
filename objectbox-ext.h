@@ -59,7 +59,7 @@ void checkPtrOrThrow(void* ptr, const std::string& context) {
 }
 }  // namespace
 
-template <class EntityT>
+template <class T>
 class Box;
 
 class Transaction;
@@ -68,7 +68,7 @@ class Transaction;
 class Store {
     OBX_store* cStore_;
 
-    template <class EntityT>
+    template <class T>
     friend class Box;
 
     friend class Transaction;
@@ -185,13 +185,14 @@ struct Cursor {
 thread_local flatbuffers::FlatBufferBuilder fbb;
 }  // namespace
 
-template <class EntityT>
+template <class EntityBinding>
 class Box {
+    using EntityT = decltype(EntityBinding::entityType());
     OBX_box* cBox_;
     Store& store_;
 
 public:
-    explicit Box(Store& store) : store_(store), cBox_(obx_box(store.cStore_, EntityT::entityId())) {
+    explicit Box(Store& store) : store_(store), cBox_(obx_box(store.cStore_, EntityBinding::entityId())) {
         checkPtrOrThrow(cBox_, "can't create box");
     }
 
@@ -211,23 +212,23 @@ public:
         obx_err err = obx_box_get(cBox_, id, &data, &size);
         if (err == OBX_NOT_FOUND) return false;
         checkErrOrThrow(err);
-        EntityT::fromFlatBuffer(data, size, outObject);
+        EntityBinding::fromFlatBuffer(data, size, outObject);
         return true;
     }
 
     obx_id put(EntityT& object) {
         fbb.Clear();
-        EntityT::toFlatBuffer(fbb, object);
+        EntityBinding::toFlatBuffer(fbb, object);
         obx_id id =
             obx_box_put_object(cBox_, fbb.GetBufferPointer(), fbb.GetSize(), OBXPutMode_PUT);
         if (id == 0) throwLastError();
-        object.setObjectId(id);
+        EntityBinding::setObjectId(object, id);
         return id;
     }
 
     void put(std::vector<EntityT>& objects, std::vector<obx_id>* outIds = nullptr) {
         Transaction tx(TxMode::WRITE, store_);
-        Cursor cursor(tx, EntityT::entityId());
+        Cursor cursor(tx, EntityBinding::entityId());
 
         if (outIds) outIds->reserve(objects.size());  // TODO should we clear previous contents?
         for (auto& object : objects) {
@@ -246,10 +247,10 @@ public:
 private:
     obx_id cursorPut(Cursor& cursor, EntityT& object) {
         fbb.Clear();
-        EntityT::toFlatBuffer(fbb, object);
+        EntityBinding::toFlatBuffer(fbb, object);
         obx_id id = obx_cursor_put_object(cursor.cCursor_, fbb.GetBufferPointer(), fbb.GetSize());
         if (id == 0) throwLastError();
-        object.setObjectId(id);
+        EntityBinding::setObjectId(object, id);
         return id;
     }
 };

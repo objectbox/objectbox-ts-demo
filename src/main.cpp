@@ -19,8 +19,8 @@ int main(int argc, char* args[]) {
               << "(core: " << obx_version_core_string() << ")" << std::endl;
 
     objectbox::Store store(create_obx_model());
-    objectbox::Box<NamedTimeRange> boxNTR(store);
-    objectbox::Box<SensorValues> boxSV(store);
+    objectbox::Box<NamedTimeRange_> boxNTR(store);
+    objectbox::Box<SensorValues_> boxSV(store);
 
     // TODO obx_opt_max_db_size_in_kb(opt, 10 * 1024 * 1024);
 

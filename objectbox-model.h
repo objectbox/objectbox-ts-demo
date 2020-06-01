@@ -12,12 +12,18 @@
 extern "C" {
 #endif
 
+/// Initializes an ObjectBox model for all entities. 
+/// The returned pointer may be NULL if the allocation failed. If the returned model is not NULL, you should check if   
+/// any error occurred by calling obx_model_error_code() and/or obx_model_error_message(). If an error occurred, you're
+/// responsible for freeing the resources by calling obx_model_free().
+/// In case there was no error when setting the model up (i.e. obx_model_error_code() returned 0), you may configure 
+/// OBX_store_options with the model by calling obx_opt_model() and subsequently opening a store with obx_store_open().
+/// As soon as you call obx_store_open(), the model pointer is consumed and MUST NOT be freed manually.
 inline OBX_model* create_obx_model() {
     OBX_model* model = obx_model();
     if (!model) return NULL;
 
-    bool successful = false;
-    do {
+    do { // break on first error
         if (obx_model_entity(model, "namedtimerange", 1, 3765299694136730253)) break;
         if (obx_model_property(model, "id", OBXPropertyType_Long, 1, 5286436616181640468)) break;
         if (obx_model_property_flags(model, OBXPropertyFlags_ID)) break;
@@ -25,7 +31,7 @@ inline OBX_model* create_obx_model() {
         if (obx_model_property(model, "end", OBXPropertyType_Long, 3, 2226587369826141769)) break;
         if (obx_model_property(model, "name", OBXPropertyType_String, 4, 8237102737394490261)) break;
         if (obx_model_entity_last_property_id(model, 4, 8237102737394490261)) break;
-
+        
         if (obx_model_entity(model, "sensorvalues", 2, 6576462802871325567)) break;
         if (obx_model_property(model, "id", OBXPropertyType_Long, 1, 7390723389650851566)) break;
         if (obx_model_property_flags(model, OBXPropertyFlags_ID)) break;
@@ -40,17 +46,9 @@ inline OBX_model* create_obx_model() {
         if (obx_model_property(model, "loadcpu4", OBXPropertyType_Double, 9, 6954854995237423885)) break;
         if (obx_model_entity_last_property_id(model, 9, 6954854995237423885)) break;
         obx_model_last_entity_id(model, 2, 6576462802871325567);
-        successful = true;
-    } while (false);
+        } while (false);
 
-    if (!successful) {
-        // TODO error handling - return model all the time and expect the caller to free on error
-        // obx_model_error_message(model);
-        obx_model_free(model);
-        return NULL;
-    }
-
-    return model;
+    return model; // NOTE: the returned model will contain error information if an error occurred.
 }
 
 #ifdef __cplusplus
