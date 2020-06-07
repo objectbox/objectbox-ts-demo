@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cmath>
 #include <cstdlib>
 #include <iostream>
 
@@ -15,8 +16,8 @@ int64_t millisSinceEpoch() {
 }
 
 int main(int argc, char* args[]) {
-    std::cout << "ObjectBox TS demo using version " << obx_version_string()
-              << "(core: " << obx_version_core_string() << ")" << std::endl;
+    std::cout << "ObjectBox TS demo using version " << obx_version_string() << "(core: " << obx_version_core_string()
+              << ")" << std::endl;
 
     objectbox::Store store(create_obx_model());
     objectbox::Box<NamedTimeRange_> boxNTR(store);
@@ -28,17 +29,34 @@ int main(int argc, char* args[]) {
 
     int64_t now = millisSinceEpoch();
 
-    int dataCount = 100000;
+    int dataCount = 1000000;
     std::vector<SensorValues> values;
     values.reserve(dataCount);
-    for (int i = 0; i < dataCount; ++i) {
-        double d = (i % 2000) - 1000 * 0.005;
-        SensorValues sensorValues{OBX_ID_NEW, now - 1000 + i, 19.5 + d, 23.3 + d, 42.75 + d,
-                                  0.80 - d,   0.7 - d,        0.6 - d,  0.5 - d};
+    double deltaDelta = 0.00000001;
+    double delta = 0.0;
+    double value = 0.0;
+    for (int i = 1; i <= dataCount; ++i) {
+        delta += deltaDelta;  // + ((rand() % 2000) - 1000) / 1000.0 * deltaDelta;  // +/- 100% jitter
+        value += delta;
+        if ((delta > 0.01 && deltaDelta > 0) || (delta < -0.01 && deltaDelta < 0)) {
+            deltaDelta = -deltaDelta;
+        }
+        if (i % 10000 == 0) std::cout << "index " << i << ": v=" << value << ", delta=" << delta << std::endl;
+
+        SensorValues sensorValues{OBX_ID_NEW,
+                                  now - 1000 + i,
+                                  19.5 + value,
+                                  23.3 + value * cos(value),
+                                  42.75 + value * sin(value),
+                                  0.80 - value,
+                                  0.7 - value,
+                                  0.6 - value,
+                                  0.5 - value};
         values.emplace_back(sensorValues);
     }
+    int64_t putStart = millisSinceEpoch();
     boxSV.put(values);
-    std::cout << "Time taken: " << millisSinceEpoch() - now << " ms" << std::endl;
+    std::cout << "Put " << dataCount << " objects in " << millisSinceEpoch() - putStart << " ms" << std::endl;
 
     NamedTimeRange namedTimeRange{OBX_ID_NEW, now - 1000, now + 1000, "green"};
     obx_id id = boxNTR.put(namedTimeRange);
