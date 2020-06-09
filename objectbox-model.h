@@ -24,7 +24,7 @@ static inline OBX_model* create_obx_model() {
     if (!model) return NULL;
 
     do { // break on first error 
-        if (obx_model_entity(model, "namedtimerange", 1, 3765299694136730253)) break;
+        if (obx_model_entity(model, "NamedTimeRange", 1, 3765299694136730253)) break;
         if (obx_model_property(model, "id", OBXPropertyType_Long, 1, 5286436616181640468)) break;
         if (obx_model_property_flags(model, OBXPropertyFlags_ID)) break;
         if (obx_model_property(model, "begin", OBXPropertyType_Long, 2, 6593850490799792041)) break;
@@ -32,14 +32,14 @@ static inline OBX_model* create_obx_model() {
         if (obx_model_property(model, "name", OBXPropertyType_String, 4, 8237102737394490261)) break;
         if (obx_model_entity_last_property_id(model, 4, 8237102737394490261)) break;
         
-        if (obx_model_entity(model, "sensorvalues", 2, 6576462802871325567)) break;
+        if (obx_model_entity(model, "SensorValues", 2, 6576462802871325567)) break;
         if (obx_model_property(model, "id", OBXPropertyType_Long, 1, 7390723389650851566)) break;
         if (obx_model_property_flags(model, OBXPropertyFlags_ID)) break;
         if (obx_model_property(model, "time", OBXPropertyType_Date, 2, 4045039018130861172)) break;
         if (obx_model_property_flags(model, OBXPropertyFlags_ID_COMPANION)) break;
-        if (obx_model_property(model, "temperatureoutside", OBXPropertyType_Double, 3, 1178344585895481685)) break;
-        if (obx_model_property(model, "temperatureinside", OBXPropertyType_Double, 4, 803419570723764507)) break;
-        if (obx_model_property(model, "temperaturecpu", OBXPropertyType_Double, 5, 4480233319781925090)) break;
+        if (obx_model_property(model, "temperatureOutside", OBXPropertyType_Double, 3, 1178344585895481685)) break;
+        if (obx_model_property(model, "temperatureInside", OBXPropertyType_Double, 4, 803419570723764507)) break;
+        if (obx_model_property(model, "temperatureCpu", OBXPropertyType_Double, 5, 4480233319781925090)) break;
         if (obx_model_property(model, "loadcpu1", OBXPropertyType_Double, 6, 5622850065863016031)) break;
         if (obx_model_property(model, "loadcpu2", OBXPropertyType_Double, 7, 8376917843086081746)) break;
         if (obx_model_property(model, "loadcpu3", OBXPropertyType_Double, 8, 1972061339506399854)) break;

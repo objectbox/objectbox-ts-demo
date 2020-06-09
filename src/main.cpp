@@ -32,11 +32,11 @@ int main(int argc, char* args[]) {
     int dataCount = 1000000;
     std::vector<SensorValues> values;
     values.reserve(dataCount);
-    double deltaDelta = 0.00000001;
+    double deltaDelta = 0.000001;
     double delta = 0.0;
     double value = 0.0;
     for (int i = 1; i <= dataCount; ++i) {
-        delta += deltaDelta;  // + ((rand() % 2000) - 1000) / 1000.0 * deltaDelta;  // +/- 100% jitter
+        delta += deltaDelta;
         value += delta;
         if ((delta > 0.01 && deltaDelta > 0) || (delta < -0.01 && deltaDelta < 0)) {
             deltaDelta = -deltaDelta;
@@ -44,7 +44,7 @@ int main(int argc, char* args[]) {
         if (i % 10000 == 0) std::cout << "index " << i << ": v=" << value << ", delta=" << delta << std::endl;
 
         SensorValues sensorValues{OBX_ID_NEW,
-                                  now - 1000 + i,
+                                  now - 1000 + i * 20,
                                   19.5 + value,
                                   23.3 + value * cos(value),
                                   42.75 + value * sin(value),
@@ -58,11 +58,16 @@ int main(int argc, char* args[]) {
     boxSV.put(values);
     std::cout << "Put " << dataCount << " objects in " << millisSinceEpoch() - putStart << " ms" << std::endl;
 
-    NamedTimeRange namedTimeRange{OBX_ID_NEW, now - 1000, now + 1000, "green"};
-    obx_id id = boxNTR.put(namedTimeRange);
-    std::cout << "New ID: " << id << std::endl;
-    std::cout << "Object ID set to: " << namedTimeRange.id << std::endl;
-    std::cout << "Total count: " << boxNTR.count() << std::endl;
+    NamedTimeRange timeRangeGreen{OBX_ID_NEW, now - 1000, now + 1000, "green"};
+    obx_id id = boxNTR.put(timeRangeGreen);
+    std::cout << "New ID for time range 'green': " << id << std::endl;
+    std::cout << "Object ID set to: " << timeRangeGreen.id << std::endl;
+
+    NamedTimeRange timeRangeRed{OBX_ID_NEW, now + 1000, now + 2000, "red"};
+    id = boxNTR.put(timeRangeRed);
+    std::cout << "New ID for time range 'red': " << id << std::endl;
+
+    std::cout << "Total time range count: " << boxNTR.count() << std::endl;
 
     std::unique_ptr<NamedTimeRange> object = boxNTR.get(id);
     if (object) {
