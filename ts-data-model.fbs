@@ -20,7 +20,10 @@ table SensorValues {
 table NamedTimeRange {
     id: ulong;
 
+    /// objectbox:date
     begin: long;
+
+    /// objectbox:date
     end: long;
 
     name: string;
