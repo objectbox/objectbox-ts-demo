@@ -508,7 +508,7 @@ private:
     /// ensure the given vector outlives the returned OBX_id_array. Additionally, you must NOT call
     /// obx_id_array_free(), because the result is not allocated by C, thus it must not free it.
     OBX_id_array cIdArrayRef(const std::vector<obx_id>& ids) {
-        return {.ids = const_cast<obx_id*>(ids.data()), .count = ids.size()};
+        return {.ids = ids.empty() ? nullptr : const_cast<obx_id*>(ids.data()), .count = ids.size()};
     }
 
     /// Consumes an OBX_id_array, producing a vector of IDs and freeing the array afterwards.

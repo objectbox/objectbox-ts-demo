@@ -15,6 +15,7 @@ struct NamedTimeRange {
     int64_t begin;
     int64_t end;
     std::string name;
+
 };
 
 struct NamedTimeRange_ {

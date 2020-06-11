@@ -19,6 +19,10 @@ int main(int argc, char* args[]) {
     std::cout << "ObjectBox TS demo using version " << obx_version_string() << "(core: " << obx_version_core_string()
               << ")" << std::endl;
 
+    // ideas:
+    // static NamedTimeRange_ binding();
+    // static Box<NamedTimeRange, NamedTimeRange_> box();
+
     objectbox::Store store(create_obx_model());
     objectbox::Box<NamedTimeRange_> boxNTR(store);
     objectbox::Box<SensorValues_> boxSV(store);
