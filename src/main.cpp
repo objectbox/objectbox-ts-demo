@@ -9,6 +9,10 @@
 
 using namespace objectbox::tsdemo;
 
+std::vector<SensorValues> createSensorValueData(int64_t now, int dataCount);
+
+void putAndPrintNamedTimeRanges(int64_t now, obx::Box<NamedTimeRange>& boxNTR);
+
 int64_t millisSinceEpoch() {
     auto time = std::chrono::system_clock::now().time_since_epoch();
     return std::chrono::duration_cast<std::chrono::milliseconds>(time).count();
@@ -24,16 +28,27 @@ int main(int argc, char* args[]) {
         exit(1);
     }
 
+    // Init ObjectBox store and boxes
     obx::Store::Options options(create_obx_model());
     obx::Store store(options);
     obx::Box<NamedTimeRange> boxNTR(store);
     obx::Box<SensorValues> boxSV(store);
-
     std::cout << "ObjectBox store opened" << std::endl;
 
+    // Create some SensorValues dummy data and put it in the database (while measuring the time for put)
     int64_t now = millisSinceEpoch();
-
     int dataCount = 1000000;
+    std::vector<SensorValues> values = createSensorValueData(now, dataCount);
+    int64_t putStart = millisSinceEpoch();
+    boxSV.put(values);
+    std::cout << "Put " << dataCount << " objects in " << millisSinceEpoch() - putStart << " ms" << std::endl;
+
+    putAndPrintNamedTimeRanges(now, boxNTR);
+
+    return 0;
+}
+
+std::vector<SensorValues> createSensorValueData(int64_t now, int dataCount) {
     std::vector<SensorValues> values;
     values.reserve(dataCount);
     double deltaDelta = 0.000001;
@@ -58,10 +73,10 @@ int main(int argc, char* args[]) {
                                   0.5 - value};
         values.emplace_back(sensorValues);
     }
-    int64_t putStart = millisSinceEpoch();
-    boxSV.put(values);
-    std::cout << "Put " << dataCount << " objects in " << millisSinceEpoch() - putStart << " ms" << std::endl;
+    return values;
+}
 
+void putAndPrintNamedTimeRanges(int64_t now, obx::Box<NamedTimeRange>& boxNTR) {
     NamedTimeRange timeRangeGreen{OBX_ID_NEW, now - 1000, now + 1000, "green"};
     obx_id id = boxNTR.put(timeRangeGreen);
     std::cout << "New ID for time range 'green': " << id << std::endl;
@@ -77,5 +92,4 @@ int main(int argc, char* args[]) {
     if (object) {
         std::cout << "Read object: " << object->id << ", name: " << object->name << std::endl;
     }
-    return 0;
 }
