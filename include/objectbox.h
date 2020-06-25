@@ -41,8 +41,34 @@ extern "C" {
 /// When using ObjectBox as a dynamic library, you should verify that a compatible version was linked using
 /// obx_version() or obx_version_is_at_least().
 #define OBX_VERSION_MAJOR 0
-#define OBX_VERSION_MINOR 8
-#define OBX_VERSION_PATCH 100  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+#define OBX_VERSION_MINOR 9
+#define OBX_VERSION_PATCH 1  // values >= 100 are reserved for dev releases leading to the next minor/major increase
+
+//----------------------------------------------
+// Common types
+//----------------------------------------------
+/// Schema entity & property identifiers
+typedef uint32_t obx_schema_id;
+
+/// Universal identifier used in schema for entities & properties
+typedef uint64_t obx_uid;
+
+/// ID of a single Object stored in the database
+typedef uint64_t obx_id;
+
+/// Error/success code returned by an obx_* function; see defines OBX_SUCCESS, OBX_NOT_FOUND, and OBX_ERROR_*
+typedef int obx_err;
+
+/// The callback for reading data one-by-one
+/// @param user_data is a pass-through argument passed to the called API
+/// @param data is the read data buffer
+/// @param size specifies the length of the read data
+/// @return true to keep going, false to cancel.
+typedef bool obx_data_visitor(void* user_data, const void* data, size_t size);
+
+//----------------------------------------------
+// Utilities
+//----------------------------------------------
 
 /// Returns the version of the library as ints. Pointers may be null.
 void obx_version(int* major, int* minor, int* patch);
@@ -58,15 +84,11 @@ const char* obx_version_string(void);
 /// The format may change, do not rely on its current form.
 const char* obx_version_core_string(void);
 
-//----------------------------------------------
-// Utilities
-//----------------------------------------------
-
 /// To be used for putting objects with prepared ID slots, e.g. obx_cursor_put_object().
 #define OBX_ID_NEW 0xFFFFFFFFFFFFFFFF
 
 /// delete the store files from the given directory
-int obx_remove_db_files(char const* directory);
+obx_err obx_remove_db_files(char const* directory);
 
 /// checks whether functions returning OBX_bytes_array are fully supported (depends on build, invariant during runtime)
 bool obx_supports_bytes_array(void);
@@ -124,28 +146,6 @@ bool obx_supports_time_series(void);
 
 /// A requested schema object (e.g. entity or property) was not found in the schema
 #define OBX_ERROR_SCHEMA_OBJECT_NOT_FOUND 10503
-
-//----------------------------------------------
-// Common types
-//----------------------------------------------
-/// Schema entity & property identifiers
-typedef uint32_t obx_schema_id;
-
-/// Universal identifier used in schema for entities & properties
-typedef uint64_t obx_uid;
-
-/// ID of a single Object stored in the database
-typedef uint64_t obx_id;
-
-/// Error/success code returned by an obx_* function; see defines OBX_SUCCESS, OBX_NOT_FOUND, and OBX_ERROR_*
-typedef int obx_err;
-
-/// The callback for reading data one-by-one
-/// @param user_data is a pass-through argument passed to the called API
-/// @param data is the read data buffer
-/// @param size specifies the length of the read data
-/// @return true to keep going, false to cancel.
-typedef bool obx_data_visitor(void* user_data, const void* data, size_t size);
 
 //----------------------------------------------
 // Error info; obx_last_error_*
@@ -388,7 +388,7 @@ obx_err obx_opt_directory(OBX_store_options* opt, const char* dir);
 void obx_opt_max_db_size_in_kb(OBX_store_options* opt, size_t size_in_kb);
 
 /// Set the file mode on the options. The default is 0755 (unix-style)
-void obx_opt_file_mode(OBX_store_options* opt, int file_mode);
+void obx_opt_file_mode(OBX_store_options* opt, unsigned int file_mode);
 
 /// Set the maximum number of readers on the options.
 /// "Readers" are an finite resource for which we need to define a maximum number upfront.
@@ -399,7 +399,7 @@ void obx_opt_file_mode(OBX_store_options* opt, int file_mode);
 /// Thus, if you are working with many threads (e.g. in a server-like scenario), it can make sense to increase the
 /// maximum number of readers.
 /// Note: The internal default is currently around 120. So when hitting this limit, try values around 200-500.
-void obx_opt_max_readers(OBX_store_options* opt, int max_readers);
+void obx_opt_max_readers(OBX_store_options* opt, unsigned int max_readers);
 
 /// Set the model on the options. The default is no model.
 /// NOTE: the model is always freed by this function, including when an error occurs.
@@ -480,6 +480,7 @@ obx_err obx_txn_success(OBX_txn* txn);
 /// 1) If it's an outermost TX and all (inner) TXs were marked successful, this commits the transaction.
 /// 2) If this transaction was not marked successful, this aborts the transaction (even if it's an inner TX).
 /// If an error is returned (e.g. commit failed because DB is full), you can assume that the transaction was closed.
+/// @param txn may be NULL
 obx_err obx_txn_close(OBX_txn* txn);
 
 /// Aborts the underlying transaction immediately and thus frees DB resources.
@@ -564,6 +565,9 @@ obx_err obx_cursor_put_padded(OBX_cursor* cursor, obx_id id, const void* data, s
 /// @param data object data, non-const because the ID slot will be written (mutated) for new entites (see above)
 /// @returns id if the object could be put, or 0 in case of an error
 obx_id obx_cursor_put_object(OBX_cursor* cursor, void* data, size_t size);
+
+/// @overload obx_id obx_cursor_put_object(OBX_cursor* cursor, void* data, size_t size)
+obx_id obx_cursor_put_object4(OBX_cursor* cursor, void* data, size_t size, OBXPutMode mode);
 
 obx_err obx_cursor_get(OBX_cursor* cursor, obx_id id, void** data, size_t* size);
 

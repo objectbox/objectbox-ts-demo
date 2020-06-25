@@ -3,10 +3,9 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "objectbox-ext.h"
+#include "objectbox-cpp.h"
 #include "objectbox-model.h"
-#include "objectbox.h"
-#include "ts-data-model.obx.h"
+#include "ts-data-model-cpp.obx.h"
 
 using namespace objectbox::tsdemo;
 
@@ -23,9 +22,9 @@ int main(int argc, char* args[]) {
     // static NamedTimeRange_ binding();
     // static Box<NamedTimeRange, NamedTimeRange_> box();
 
-    objectbox::Store store(create_obx_model());
-    objectbox::Box<NamedTimeRange_> boxNTR(store);
-    objectbox::Box<SensorValues_> boxSV(store);
+    obx::Store store(create_obx_model());
+    obx::Box<NamedTimeRange> boxNTR(store);
+    obx::Box<SensorValues> boxSV(store);
 
     // TODO obx_opt_max_db_size_in_kb(opt, 10 * 1024 * 1024);
 

@@ -6,7 +6,7 @@
     {
       "id": "1:3765299694136730253",
       "lastPropertyId": "4:8237102737394490261",
-      "name": "namedtimerange",
+      "name": "NamedTimeRange",
       "properties": [
         {
           "id": "1:5286436616181640468",
@@ -17,12 +17,12 @@
         {
           "id": "2:6593850490799792041",
           "name": "begin",
-          "type": 6
+          "type": 10
         },
         {
           "id": "3:2226587369826141769",
           "name": "end",
-          "type": 6
+          "type": 10
         },
         {
           "id": "4:8237102737394490261",
@@ -34,7 +34,7 @@
     {
       "id": "2:6576462802871325567",
       "lastPropertyId": "9:6954854995237423885",
-      "name": "sensorvalues",
+      "name": "SensorValues",
       "properties": [
         {
           "id": "1:7390723389650851566",
@@ -50,37 +50,37 @@
         },
         {
           "id": "3:1178344585895481685",
-          "name": "temperatureoutside",
+          "name": "temperatureOutside",
           "type": 8
         },
         {
           "id": "4:803419570723764507",
-          "name": "temperatureinside",
+          "name": "temperatureInside",
           "type": 8
         },
         {
           "id": "5:4480233319781925090",
-          "name": "temperaturecpu",
+          "name": "temperatureCpu",
           "type": 8
         },
         {
           "id": "6:5622850065863016031",
-          "name": "loadcpu1",
+          "name": "loadCpu1",
           "type": 8
         },
         {
           "id": "7:8376917843086081746",
-          "name": "loadcpu2",
+          "name": "loadCpu2",
           "type": 8
         },
         {
           "id": "8:1972061339506399854",
-          "name": "loadcpu3",
+          "name": "loadCpu3",
           "type": 8
         },
         {
           "id": "9:6954854995237423885",
-          "name": "loadcpu4",
+          "name": "loadCpu4",
           "type": 8
         }
       ]
