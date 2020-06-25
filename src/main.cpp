@@ -15,18 +15,19 @@ int64_t millisSinceEpoch() {
 }
 
 int main(int argc, char* args[]) {
-    std::cout << "ObjectBox TS demo using version " << obx_version_string() << "(core: " << obx_version_core_string()
+    std::cout << "ObjectBox TS demo using ObjectBox library " << obx_version_string() << " (core: " << obx_version_core_string()
               << ")" << std::endl;
 
-    // ideas:
-    // static NamedTimeRange_ binding();
-    // static Box<NamedTimeRange, NamedTimeRange_> box();
+    if(!obx_supports_time_series()) {
+        std::cout << "This time series demo requires ObjectBox TS, a special time series edition." << std::endl;
+        std::cout << "To get ObjectBox TS, please visit https://objectbox.io/time-series-database/." << std::endl;
+        exit(1);
+    }
 
-    obx::Store store(create_obx_model());
+    obx::Store::Options options(create_obx_model());
+    obx::Store store(options);
     obx::Box<NamedTimeRange> boxNTR(store);
     obx::Box<SensorValues> boxSV(store);
-
-    // TODO obx_opt_max_db_size_in_kb(opt, 10 * 1024 * 1024);
 
     std::cout << "ObjectBox store opened" << std::endl;
 
