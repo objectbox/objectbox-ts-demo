@@ -19,11 +19,13 @@
 #include <cstdlib>
 #include <iostream>
 
+#include "StopWatch.h"
 #include "objectbox-cpp.h"
 #include "objectbox-model.h"
 #include "ts-data-model-cpp.obx.h"
 
-using namespace objectbox::tsdemo;
+using namespace objectbox;          // util
+using namespace objectbox::tsdemo;  // our generated code
 
 std::vector<SensorValues> createSensorValueData(int64_t now, int dataCount);
 
@@ -35,10 +37,10 @@ int64_t millisSinceEpoch() {
 }
 
 int main(int argc, char* args[]) {
-    std::cout << "ObjectBox TS demo using ObjectBox library " << obx_version_string() << " (core: " << obx_version_core_string()
-              << ")" << std::endl;
+    std::cout << "ObjectBox TS demo using ObjectBox library " << obx_version_string()
+              << " (core: " << obx_version_core_string() << ")" << std::endl;
 
-    if(!obx_supports_time_series()) {
+    if (!obx_supports_time_series()) {
         std::cout << "This time series demo requires ObjectBox TS, a special time series edition." << std::endl;
         std::cout << "To get ObjectBox TS, please visit https://objectbox.io/time-series-database/." << std::endl;
         exit(1);
@@ -52,14 +54,24 @@ int main(int argc, char* args[]) {
     std::cout << "ObjectBox store opened" << std::endl;
 
     // Create some SensorValues dummy data and put it in the database (while measuring the time for put)
-    int64_t now = millisSinceEpoch();
+    int64_t start = millisSinceEpoch();
     int dataCount = 1000000;
-    std::vector<SensorValues> values = createSensorValueData(now, dataCount);
-    int64_t putStart = millisSinceEpoch();
+    std::vector<SensorValues> values = createSensorValueData(start, dataCount);
+    StopWatch stopWatch;
     boxSV.put(values);
-    std::cout << "Put " << dataCount << " objects in " << millisSinceEpoch() - putStart << " ms" << std::endl;
+    std::cout << "Put " << dataCount << " objects in " << stopWatch.durationForLog() << std::endl;
+    values.clear();  // Free memory for putted objects (optional)
 
-    putAndPrintNamedTimeRanges(now, boxNTR);
+    putAndPrintNamedTimeRanges(start, boxNTR);
+
+    // Query objects in a certain one second time range
+    obx::QueryBuilder<SensorValues> queryBuilder = boxSV.query();
+    obx_qb_int_between(queryBuilder.cPtr(), SensorValues_::time, start + 1000, start + 1999);
+    obx::Query<SensorValues> query = queryBuilder.build();
+    stopWatch.reset();
+    std::vector<std::unique_ptr<SensorValues>> result = query.find();
+    std::cout << "Time range query completed in " << stopWatch.durationForLog() << " (" << result.size()
+              << " resulting objects)" << std::endl;
 
     return 0;
 }
