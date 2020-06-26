@@ -31,6 +31,7 @@ std::vector<SensorValues> createSensorValueData(int64_t now, int dataCount);
 
 void putAndPrintNamedTimeRanges(int64_t now, obx::Box<NamedTimeRange>& boxNTR);
 
+void removeDataBefore(obx::Box<SensorValues> box, int64_t time);
 int64_t millisSinceEpoch() {
     auto time = std::chrono::system_clock::now().time_since_epoch();
     return std::chrono::duration_cast<std::chrono::milliseconds>(time).count();
@@ -48,13 +49,17 @@ int main(int argc, char* args[]) {
 
     // Init ObjectBox store and boxes
     obx::Store::Options options(create_obx_model());
+    options.maxDbSizeInKByte = 10 * 1024 * 1024;  // 10 GB to allow data from several runs
     obx::Store store(options);
     obx::Box<NamedTimeRange> boxNTR(store);
     obx::Box<SensorValues> boxSV(store);
     std::cout << "ObjectBox store opened" << std::endl;
 
-    // Create some SensorValues dummy data and put it in the database (while measuring the time for put)
     int64_t start = millisSinceEpoch();
+    boxNTR.removeAll();
+    removeDataBefore(boxSV, start - 5000);  // Older than 5s
+
+    // Create some SensorValues dummy data and put it in the database (while measuring the time for put)
     int dataCount = 1000000;
     std::vector<SensorValues> values = createSensorValueData(start, dataCount);
     StopWatch stopWatch;
@@ -67,7 +72,7 @@ int main(int argc, char* args[]) {
     // Query objects in a certain one second time range
     obx::QueryBuilder<SensorValues> queryBuilder = boxSV.query();
     obx_qb_int_between(queryBuilder.cPtr(), SensorValues_::time, start + 1000, start + 1999);
-    obx::Query<SensorValues> query = queryBuilder.build();
+    obx::Query<SensorValues> query = queryBuilder.build();  // Note: query object can be re-used (without its builder)
     stopWatch.reset();
     std::vector<std::unique_ptr<SensorValues>> result = query.find();
     std::cout << "Time range query completed in " << stopWatch.durationForLog() << " (" << result.size()
@@ -88,7 +93,7 @@ std::vector<SensorValues> createSensorValueData(int64_t now, int dataCount) {
         if ((delta > 0.01 && deltaDelta > 0) || (delta < -0.01 && deltaDelta < 0)) {
             deltaDelta = -deltaDelta;
         }
-        if (i % 10000 == 0) std::cout << "index " << i << ": v=" << value << ", delta=" << delta << std::endl;
+        if (i % 100000 == 0) std::cout << "index " << i << ": v=" << value << ", delta=" << delta << std::endl;
 
         SensorValues sensorValues{OBX_ID_NEW,
                                   now - 1000 + i * 20,
@@ -120,4 +125,15 @@ void putAndPrintNamedTimeRanges(int64_t now, obx::Box<NamedTimeRange>& boxNTR) {
     if (object) {
         std::cout << "Read object: " << object->id << ", name: " << object->name << std::endl;
     }
+}
+
+void removeDataBefore(obx::Box<SensorValues> box, int64_t time) {
+    obx::QueryBuilder<SensorValues> queryBuilder = box.query();
+    obx_qb_int_less(queryBuilder.cPtr(), SensorValues_::time, time);
+    StopWatch stopWatch;
+    size_t removeCount = queryBuilder.build().remove();
+    std::cout << "Removed old objects in " << stopWatch.durationForLog() << " (" << removeCount << " objects)"
+              << std::endl;
+
+    std::cout << "Total objects in DB: " << box.count() << std::endl;
 }
