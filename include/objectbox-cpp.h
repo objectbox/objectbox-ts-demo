@@ -315,6 +315,14 @@ public:
 
     OBX_query_builder* cPtr() const { return cQueryBuilder_; }
 
+    template <typename ENTITY_LINKED>
+    QueryBuilder<ENTITY_LINKED> linkTime(obx_schema_id linkedEntityId, obx_schema_id beginPropertyId,
+                                         obx_schema_id endPropertyId = 0) {
+        OBX_query_builder* cQB = obx_qb_link_time(cPtr(), linkedEntityId, beginPropertyId, endPropertyId);
+        checkPtrOrThrow(cQB, "can't build a query link");
+        return QueryBuilder<ENTITY_LINKED>(store_, cQB);
+    }
+
     Query<EntityT> build();
 };
 

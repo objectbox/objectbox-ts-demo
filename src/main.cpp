@@ -28,10 +28,10 @@ using namespace objectbox;          // util
 using namespace objectbox::tsdemo;  // our generated code
 
 std::vector<SensorValues> createSensorValueData(int64_t now, int dataCount);
-
 void putAndPrintNamedTimeRanges(int64_t now, obx::Box<NamedTimeRange>& boxNTR);
-
 void removeDataBefore(obx::Box<SensorValues> box, int64_t time);
+void buildAndRunQueries(obx::Box<SensorValues>& box, int64_t start);
+
 int64_t millisSinceEpoch() {
     auto time = std::chrono::system_clock::now().time_since_epoch();
     return std::chrono::duration_cast<std::chrono::milliseconds>(time).count();
@@ -58,6 +58,7 @@ int main(int argc, char* args[]) {
     int64_t start = millisSinceEpoch();
     boxNTR.removeAll();
     removeDataBefore(boxSV, start - 5000);  // Older than 5s
+    // boxSV.removeAll();  // Or remove all if you prefer consistent data each run
 
     // Create some SensorValues dummy data and put it in the database (while measuring the time for put)
     int dataCount = 1000000;
@@ -69,14 +70,7 @@ int main(int argc, char* args[]) {
 
     putAndPrintNamedTimeRanges(start, boxNTR);
 
-    // Query objects in a certain one second time range
-    obx::QueryBuilder<SensorValues> queryBuilder = boxSV.query();
-    obx_qb_int_between(queryBuilder.cPtr(), SensorValues_::time, start + 1000, start + 1999);
-    obx::Query<SensorValues> query = queryBuilder.build();  // Note: query object can be re-used (without its builder)
-    stopWatch.reset();
-    std::vector<std::unique_ptr<SensorValues>> result = query.find();
-    std::cout << "Time range query completed in " << stopWatch.durationForLog() << " (" << result.size()
-              << " resulting objects)" << std::endl;
+    buildAndRunQueries(boxSV, start);
 
     return 0;
 }
@@ -124,6 +118,32 @@ void putAndPrintNamedTimeRanges(int64_t now, obx::Box<NamedTimeRange>& boxNTR) {
     std::unique_ptr<NamedTimeRange> object = boxNTR.get(id);
     if (object) {
         std::cout << "Read object: " << object->id << ", name: " << object->name << std::endl;
+    }
+}
+
+void buildAndRunQueries(obx::Box<SensorValues>& box, int64_t start) {
+    // Query objects in a certain one second time range
+    {
+        obx::QueryBuilder<SensorValues> qbRange = box.query();
+        obx_qb_int_between(qbRange.cPtr(), SensorValues_::time, start + 1000, start + 1999);
+        obx::Query<SensorValues> query = qbRange.build();  // Note: query object can be re-used (without its builder)
+        StopWatch stopWatch;
+        std::vector<std::unique_ptr<SensorValues>> result = query.find();
+        std::cout << "Time range query completed in " << stopWatch.durationForLog() << " (" << result.size()
+                  << " resulting objects)" << std::endl;
+    }
+
+    // Query objects using a link to a entity type that defines a time range (NamedTimeRange)
+    {
+        obx::QueryBuilder<SensorValues> qbLink = box.query();
+        obx::QueryBuilder<NamedTimeRange> qbNamedTimeRange =
+            qbLink.linkTime<NamedTimeRange>(NamedTimeRange_::entityId(), NamedTimeRange_::begin, NamedTimeRange_::end);
+        obx_qb_string_equal(qbNamedTimeRange.cPtr(), NamedTimeRange_::name, "green", true);
+        obx::Query<SensorValues> query = qbLink.build();  // Note: query object can be re-used (without its builder)
+        StopWatch stopWatch;
+        std::vector<std::unique_ptr<SensorValues>> result = query.find();
+        std::cout << "Named time range query (linked) completed in " << stopWatch.durationForLog() << " ("
+                  << result.size() << " resulting objects)" << std::endl;
     }
 }
 
