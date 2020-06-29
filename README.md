@@ -3,7 +3,8 @@ ObjectBox TS (Time Series) Demo
 **ObjectBox TS** offers additional time series functionality over the standard ObjectBox database.
 This allows very efficient processing of time based data, while still offering object based persistence.
 
-This demo shows how to develop with ObjectBox TS, which is very similar to standard ObjectBox.
+This demo shows how to develop with ObjectBox TS.
+While its usage is very similar to standard ObjectBox, it allows superior performance for time based data. 
 
 **In order to run this demo, you need to get the [ObjectBox TS library from objectbox.io](https://objectbox.io/time-series-database/).** 
 
@@ -43,6 +44,61 @@ Using a templated `obx::Box`, it's a single call to `put()`:
 
 Note that `createSensorValueData()` creates dummy sensor data, which is mostly unrelated to ObjectBox.
 The single special thing here is that the `SensorValues.id` member is set to `OBX_ID_NEW` to mark it as an new object.
+
+Querying Time Series data
+-------------------------
+TS enabled types can accessed just like other types.
+For example, `obx::Box::get(id)` returns an object for the given ID.
+Queries also work as usual. With one pleasant exception: time based queries perform much faster.
+The runtime behavior of queries using time series properties is similar to queries using indexed properties,
+but without requiring extra storage for index data.
+Thus, TS queries scale very well with a high number of objects because they avoid scanning all objects.  
+
+In [main.cpp](src/main.cpp), there's a function `buildAndRunQueries()`, which shows two queries in action.
+Using the standard query builder approach, we add a "between" condition on the `time` property associated with "SensorValues".
+It queries for `SensorValues` in the time range from "1 second since start" until "2 seconds since start":    
+
+    obx::QueryBuilder<SensorValues> qbRange = box.query();
+    obx_qb_int_between(qbRange.cPtr(), SensorValues_::time, start + 1000, start + 1999);
+    obx::Query<SensorValues> query = qbRange.build();
+    std::vector<std::unique_ptr<SensorValues>> result = query.find();
+    
+### Query with time links
+
+The second query also returns object in a time range.
+But instead of specifying the time range directly, we want to refer to a time range defined in another type.
+Let's have another look at [ts-data-model.fbs](ts-data-model.fbs) to locate the `NamedTimeRange` type:
+
+```
+table NamedTimeRange {
+    id: ulong;
+
+    /// objectbox:date
+    begin: long;
+
+    /// objectbox:date
+    end: long;
+
+    name: string;
+}
+```
+
+This type is an example for how to dynamically define time ranges.
+In the function `putAndPrintNamedTimeRanges()`, we put two time ranges into the database.
+One called "green" and the other called "red".
+
+So now let's query for all `SensorValues` objects that fall in the time range of the `NamedTimeRange` instance called "green".
+To do so, we need to define a "link" between these two types.
+As this link is time based, we need to tell ObjectBox which properties define the time range (begin and end time).
+
+    obx::QueryBuilder<SensorValues> qbLink = box.query();
+    obx::QueryBuilder<NamedTimeRange> qbNamedTimeRange =
+        qbLink.linkTime<NamedTimeRange>(NamedTimeRange_::entityId(), NamedTimeRange_::begin, NamedTimeRange_::end);
+    obx_qb_string_equal(qbNamedTimeRange.cPtr(), NamedTimeRange_::name, "green", true);
+
+Note, that the result of linking to `NamedTimeRange` results in a `QueryBuilder<NamedTimeRange>`.
+Thus, the scope of that query builder is `NamedTimeRange` and we can define query criteria for `NamedTimeRange`.
+This is what we do in the last line (`obx_qb_string_equal()`) to match against the "green" time range.
 
 License
 -------
