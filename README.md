@@ -111,6 +111,12 @@ Note, that the result of linking to `NamedTimeRange` results in a `QueryBuilder<
 Thus, the scope of that query builder is `NamedTimeRange` and we can define query criteria for `NamedTimeRange`.
 This is what we do in the last line (`obx_qb_string_equal()`) to match against the "green" time range.
 
+Next steps
+----------
+This example project showed how to get started with ObjectBox TS and its very efficient time series functionality. 
+Want more? Just reach out to us using the [ObjectBox TS web page](https://objectbox.io/time-series-database/).
+We're happy to learn about your individual use case and how ObjectBox TS can help you. 
+
 License
 -------
     Copyright 2020 ObjectBox Ltd. All rights reserved.
