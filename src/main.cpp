@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
+#include <iomanip>
 #include <iostream>
 
 #include "StopWatch.h"
@@ -28,13 +29,20 @@ using namespace objectbox;          // util
 using namespace objectbox::tsdemo;  // our generated code
 
 std::vector<SensorValues> createSensorValueData(int64_t now, int dataCount);
-void putAndPrintNamedTimeRanges(int64_t now, obx::Box<NamedTimeRange>& boxNTR);
+void putAndPrintNamedTimeRanges(obx::Box<NamedTimeRange>& boxNTR, int64_t start);
 void removeDataBefore(obx::Box<SensorValues> box, int64_t time);
 void buildAndRunQueries(obx::Box<SensorValues>& box, int64_t start);
+void printMinMaxTime(obx::Box<SensorValues>& box, int64_t start);
 
 int64_t millisSinceEpoch() {
     auto time = std::chrono::system_clock::now().time_since_epoch();
     return std::chrono::duration_cast<std::chrono::milliseconds>(time).count();
+}
+
+void putTimestamp(int64_t millis) {
+    std::time_t timeSeconds = millis / 1000;
+    std::tm* t = std::gmtime(&timeSeconds);
+    std::cout << std::put_time(t, "%F %T");
 }
 
 int main(int argc, char* args[]) {
@@ -68,7 +76,9 @@ int main(int argc, char* args[]) {
     std::cout << "Put " << dataCount << " objects in " << stopWatch.durationForLog() << std::endl;
     values.clear();  // Free memory for putted objects (optional)
 
-    putAndPrintNamedTimeRanges(start, boxNTR);
+    putAndPrintNamedTimeRanges(boxNTR, start);
+
+    printMinMaxTime(boxSV, start);
 
     buildAndRunQueries(boxSV, start);
 
@@ -103,13 +113,13 @@ std::vector<SensorValues> createSensorValueData(int64_t now, int dataCount) {
     return values;
 }
 
-void putAndPrintNamedTimeRanges(int64_t now, obx::Box<NamedTimeRange>& boxNTR) {
-    NamedTimeRange timeRangeGreen{OBX_ID_NEW, now - 1000, now + 1000, "green"};
+void putAndPrintNamedTimeRanges(obx::Box<NamedTimeRange>& boxNTR, int64_t start) {
+    NamedTimeRange timeRangeGreen{OBX_ID_NEW, start - 1000, start + 1000, "green"};
     obx_id id = boxNTR.put(timeRangeGreen);
     std::cout << "New ID for time range 'green': " << id << std::endl;
     std::cout << "Object ID set to: " << timeRangeGreen.id << std::endl;
 
-    NamedTimeRange timeRangeRed{OBX_ID_NEW, now + 1000, now + 2000, "red"};
+    NamedTimeRange timeRangeRed{OBX_ID_NEW, start + 1000, start + 2000, "red"};
     id = boxNTR.put(timeRangeRed);
     std::cout << "New ID for time range 'red': " << id << std::endl;
 
@@ -119,6 +129,21 @@ void putAndPrintNamedTimeRanges(int64_t now, obx::Box<NamedTimeRange>& boxNTR) {
     if (object) {
         std::cout << "Read object: " << object->id << ", name: " << object->name << std::endl;
     }
+}
+
+void printMinMaxTime(obx::Box<SensorValues>& box, int64_t start) {
+    std::cout << "Start time: ";
+    putTimestamp(start);
+
+    StopWatch stopWatch;
+    int64_t timeMin{0}, timeMax{0};
+    // We could also get the IDs, but we pass nullptr instead as we only print the values
+    box.timeSeriesMinMax(nullptr, &timeMin, nullptr, &timeMax);
+    std::cout << std::endl << "Min time value in database: ";
+    putTimestamp(timeMin);
+    std::cout << std::endl << "Max time value in database: ";
+    putTimestamp(timeMax);
+    std::cout << std::endl << "Got min/max in " << stopWatch.durationForLog() << std::endl;
 }
 
 void buildAndRunQueries(obx::Box<SensorValues>& box, int64_t start) {

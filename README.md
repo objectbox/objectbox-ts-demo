@@ -45,6 +45,17 @@ Using a templated `obx::Box`, it's a single call to `put()`:
 Note that `createSensorValueData()` creates dummy sensor data, which is mostly unrelated to ObjectBox.
 The single special thing here is that the `SensorValues.id` member is set to `OBX_ID_NEW` to mark it as an new object.
 
+Get the minimum and maximum time values
+---------------------------------------
+Often, you want to know the minimum and/or maximum time values of the stored data.
+For ObjectBox TS, this is a very efficient look up.  
+In the [main.cpp](src/main.cpp) file, you will find an example in the `printMinMaxTime()` function:
+
+    int64_t timeMin{0}, timeMax{0};
+    box.timeSeriesMinMax(nullptr, &timeMin, nullptr, &timeMax);
+
+There's also an overload of `timeSeriesMinMax()` accepting a time range (begin and end time) within to look for min/max values.
+
 Querying Time Series data
 -------------------------
 TS enabled types can accessed just like other types.

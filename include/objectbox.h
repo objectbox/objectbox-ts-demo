@@ -616,19 +616,17 @@ OBX_id_array* obx_cursor_rel_ids(OBX_cursor* cursor, obx_schema_id relation_id, 
 // Time series
 //----------------------------------------------
 
-// TODO box based functions
-// TODO is there a better name than "limit"? Maybe something about min/max or first/last (as in C++ API)?
-//      Split in obx_cursor_ts_min() and obx_cursor_ts_max()?
+// TODO box based functions (?)
 
 /// Time series: get the limits (min/max time values) over all objects
 /// @returns OBX_NOT_FOUND if no objects are stored
-obx_err obx_cursor_ts_limits(OBX_cursor* cursor, obx_id* out_begin_id, int64_t* out_begin_value, obx_id* out_end_id,
-                             int64_t* out_end_value);
+obx_err obx_cursor_ts_min_max(OBX_cursor* cursor, obx_id* out_min_id, int64_t* out_min_value, obx_id* out_max_id,
+                              int64_t* out_max_value);
 
 /// Time series: get the limits (min/max time values) over objects within the given time range
 /// @returns OBX_NOT_FOUND if no objects are stored in the given range
-obx_err obx_cursor_ts_limits_range(OBX_cursor* cursor, int64_t range_begin, int64_t range_end, obx_id* out_begin_id,
-                                   int64_t* out_begin_value, obx_id* out_end_id, int64_t* out_end_value);
+obx_err obx_cursor_ts_min_max_range(OBX_cursor* cursor, int64_t range_begin, int64_t range_end, obx_id* out_min_id,
+                                    int64_t* out_min_value, obx_id* out_max_id, int64_t* out_max_value);
 
 //----------------------------------------------
 // Box
