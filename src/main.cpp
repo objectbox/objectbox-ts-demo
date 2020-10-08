@@ -23,7 +23,7 @@
 #include "StopWatch.h"
 #include "objectbox-cpp.h"
 #include "objectbox-model.h"
-#include "ts-data-model-cpp.obx.h"
+#include "ts-data-model.obx.hpp"
 
 using namespace objectbox;          // util
 using namespace objectbox::tsdemo;  // our generated code
@@ -150,7 +150,7 @@ void buildAndRunQueries(obx::Box<SensorValues>& box, int64_t start) {
     // Query objects in a certain one second time range
     {
         obx::QueryBuilder<SensorValues> qbRange = box.query();
-        obx_qb_int_between(qbRange.cPtr(), SensorValues_::time, start + 1000, start + 1999);
+        qbRange.with(SensorValues_::time.between(start + 1000, start + 1999));
         obx::Query<SensorValues> query = qbRange.build();  // Note: query object can be re-used (without its builder)
         StopWatch stopWatch;
         std::vector<std::unique_ptr<SensorValues>> result = query.find();
@@ -162,8 +162,8 @@ void buildAndRunQueries(obx::Box<SensorValues>& box, int64_t start) {
     {
         obx::QueryBuilder<SensorValues> qbLink = box.query();
         obx::QueryBuilder<NamedTimeRange> qbNamedTimeRange =
-            qbLink.linkTime<NamedTimeRange>(NamedTimeRange_::entityId(), NamedTimeRange_::begin, NamedTimeRange_::end);
-        obx_qb_string_equal(qbNamedTimeRange.cPtr(), NamedTimeRange_::name, "green", true);
+            qbLink.linkTime<NamedTimeRange>(NamedTimeRange_::begin, NamedTimeRange_::end);
+        qbNamedTimeRange.with(NamedTimeRange_::name.equals("green"));
         obx::Query<SensorValues> query = qbLink.build();  // Note: query object can be re-used (without its builder)
         StopWatch stopWatch;
         std::vector<std::unique_ptr<SensorValues>> result = query.find();
@@ -174,7 +174,7 @@ void buildAndRunQueries(obx::Box<SensorValues>& box, int64_t start) {
 
 void removeDataBefore(obx::Box<SensorValues> box, int64_t time) {
     obx::QueryBuilder<SensorValues> queryBuilder = box.query();
-    obx_qb_int_less(queryBuilder.cPtr(), SensorValues_::time, time);
+    queryBuilder.with(SensorValues_::time.lessThan(time));
     StopWatch stopWatch;
     size_t removeCount = queryBuilder.build().remove();
     std::cout << "Removed old objects in " << stopWatch.durationForLog() << " (" << removeCount << " objects)"

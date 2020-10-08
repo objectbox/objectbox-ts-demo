@@ -9,5 +9,10 @@ include_directories(src/util)
 
 link_directories(lib)
 
-add_executable(${PROJECT_NAME} src/main.cpp src/util/StopWatch.cpp)
+add_executable(${PROJECT_NAME}
+        src/main.cpp
+        src/ts-data-model.obx.cpp
+        src/util/StopWatch.cpp
+        )
+
 target_link_libraries(${PROJECT_NAME} objectbox)
