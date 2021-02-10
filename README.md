@@ -3,7 +3,7 @@ ObjectBox TS (Time Series) Demo
 **ObjectBox TS** offers additional time series functionality over the standard ObjectBox database.
 This allows very efficient processing of time based data, while still offering object based persistence.
 
-This demo shows how to develop with ObjectBox TS using C++ (contact us for other languages).
+This demo shows [how to develop with ObjectBox TS using C++](https://cpp.objectbox.io/time-series-data) (contact us for other languages).
 While its usage is very similar to standard ObjectBox, it comes with superior performance for time based data.
 
 Run the TS Demo
