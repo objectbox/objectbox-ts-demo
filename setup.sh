@@ -1,24 +1,5 @@
 #!/usr/bin/env bash
 
-generator_exe="objectbox-generator"
-if ! command -v $generator_exe &> /dev/null; then
-  generator_exe="./objectbox-generator"
-  if [ ! -f "$generator_exe" ]; then
-    generator_exe="../objectbox-generator/objectbox-generator"
-    if [ ! -f "$generator_exe" ]; then
-      echo "Please get the latest ObjectBox Generator release from here:"
-      echo "https://github.com/objectbox/objectbox-generator/releases/latest"
-      echo "More details: https://github.com/objectbox/objectbox-generator"
-      exit
-    fi
-  fi
-fi
-
-echo "$generator_exe found"
-"$generator_exe" -cpp ts-data-model.fbs
-
-rsync -a *.{hpp,cpp} "src/"
-
 lib_version="0.12.0"
 curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/main/download.sh | bash /dev/stdin $lib_version
 ls -lhR download/
@@ -31,3 +12,23 @@ if [ -f "$lib_file" ]; then
   cp "$lib_file" lib/
   ls -lh lib/
 fi
+
+generator_exe="objectbox-generator"
+if ! command -v $generator_exe &> /dev/null; then
+  generator_exe="./objectbox-generator"
+  if [ ! -f "$generator_exe" ]; then
+    generator_exe="../objectbox-generator/objectbox-generator"
+    if [ ! -f "$generator_exe" ]; then
+      echo "If you want to adjust the data model (ts-data-model.fbs), you also need ObjectBox Generator."
+      echo "------------------------------------------------------------"
+      echo "Please get the latest ObjectBox Generator release from here:"
+      echo "https://github.com/objectbox/objectbox-generator/releases/latest"
+      echo "More details: https://github.com/objectbox/objectbox-generator"
+      exit
+    fi
+  fi
+fi
+
+echo "$generator_exe found"
+"$generator_exe" -cpp ts-data-model.fbs
+rsync -a *.{hpp,cpp} "src/"
