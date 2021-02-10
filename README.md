@@ -4,9 +4,14 @@ ObjectBox TS (Time Series) Demo
 This allows very efficient processing of time based data, while still offering object based persistence.
 
 This demo shows how to develop with ObjectBox TS using C++ (contact us for other languages).
-While its usage is very similar to standard ObjectBox, it comes with superior performance for time based data. 
+While its usage is very similar to standard ObjectBox, it comes with superior performance for time based data.
 
-**In order to run this demo, you need to get the [ObjectBox TS library from objectbox.io](https://objectbox.io/time-series-database/).** 
+Run the TS Demo
+---------------
+**In order to run this demo, you need to get the [ObjectBox TS library from objectbox.io](https://objectbox.io/time-series-database/).**
+The [CMake build build](CMakeLists.txt) expects the library (e.g. libobjectbox.so) in `lib/` in the project directory.
+
+If you do not have the TS library yet, you can test the build with the standard (non-TS) ObjectBox library by running `./setup.sh`.
 
 Time Series data type
 ---------------------
@@ -128,7 +133,7 @@ Here are some screenshots to give you a first impression:
 
 License
 -------
-    Copyright 2020 ObjectBox Ltd. All rights reserved.
+    Copyright 2021 ObjectBox Ltd. All rights reserved.
     
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
