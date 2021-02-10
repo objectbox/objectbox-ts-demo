@@ -54,3 +54,10 @@ callgrind.out.*
 /native-debug-symbols/
 *test.log
 download/
+
+# TS demo specific
+objectbox-generator
+objectbox-generator.exe
+# "tmp" files by generator
+*.obx.cpp
+*.obx.hpp
