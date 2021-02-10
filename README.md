@@ -13,6 +13,13 @@ The [CMake build build](CMakeLists.txt) expects the library (e.g. libobjectbox.s
 
 If you do not have the TS library yet, you can test the build with the standard (non-TS) ObjectBox library by running `./setup.sh`.
 
+At this point you should be able to run the demo in a CMake aware IDE.
+Or, if you prefer the command line, run these commands to build and run the demo:
+
+    cmake .
+    make
+    ./objectbox_ts_demo
+
 Time Series data type
 ---------------------
 This example stores data from sensors at a specific time in a type called `SensorValues`.

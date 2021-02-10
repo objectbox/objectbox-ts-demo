@@ -56,6 +56,9 @@ callgrind.out.*
 download/
 
 # TS demo specific
+objectbox_ts_demo
+objectbox_ts_demo.exe
+cmake_install.cmake
 objectbox-generator
 objectbox-generator.exe
 # "tmp" files by generator
