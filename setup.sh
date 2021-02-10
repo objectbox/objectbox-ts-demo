@@ -19,8 +19,8 @@ echo "$generator_exe found"
 
 rsync -a *.{hpp,cpp} "src/"
 
-lib_version="0.10.0"
-curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/master/download.sh | bash /dev/stdin $lib_version
+lib_version="0.12.0"
+curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/main/download.sh | bash /dev/stdin $lib_version
 ls -lhR download/
 echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 echo "^^^ Please check if you need to update the includes from the download dir ^^^"

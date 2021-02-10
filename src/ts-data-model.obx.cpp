@@ -32,7 +32,7 @@ std::unique_ptr<objectbox::tsdemo::NamedTimeRange> objectbox::tsdemo::NamedTimeR
     return object;
 }
 
-void objectbox::tsdemo::NamedTimeRange_::fromFlatBuffer(const void* data, size_t size, objectbox::tsdemo::NamedTimeRange& outObject) {
+void objectbox::tsdemo::NamedTimeRange_::fromFlatBuffer(const void* data, size_t, objectbox::tsdemo::NamedTimeRange& outObject) {
     const auto* table = flatbuffers::GetRoot<flatbuffers::Table>(data);
     assert(table);
     outObject.id = table->GetField<uint64_t>(4, 0);
@@ -84,7 +84,7 @@ std::unique_ptr<objectbox::tsdemo::SensorValues> objectbox::tsdemo::SensorValues
     return object;
 }
 
-void objectbox::tsdemo::SensorValues_::fromFlatBuffer(const void* data, size_t size, objectbox::tsdemo::SensorValues& outObject) {
+void objectbox::tsdemo::SensorValues_::fromFlatBuffer(const void* data, size_t, objectbox::tsdemo::SensorValues& outObject) {
     const auto* table = flatbuffers::GetRoot<flatbuffers::Table>(data);
     assert(table);
     outObject.id = table->GetField<uint64_t>(4, 0);

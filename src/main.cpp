@@ -21,8 +21,8 @@
 #include <iostream>
 
 #include "StopWatch.h"
-#include "objectbox-cpp.h"
 #include "objectbox-model.h"
+#include "objectbox.hpp"
 #include "ts-data-model.obx.hpp"
 
 using namespace objectbox;          // util
@@ -57,7 +57,7 @@ int main(int argc, char* args[]) {
 
     // Init ObjectBox store and boxes
     obx::Store::Options options(create_obx_model());
-    options.maxDbSizeInKByte = 10 * 1024 * 1024;  // 10 GB to allow data from several runs
+    options.maxDbSizeInKb(10 * 1024 * 1024);  // 10 GB to allow data from several runs
     obx::Store store(options);
     obx::Box<NamedTimeRange> boxNTR(store);
     obx::Box<SensorValues> boxSV(store);
@@ -165,6 +165,7 @@ void buildAndRunQueries(obx::Box<SensorValues>& box, int64_t start) {
             qbLink.linkTime<NamedTimeRange>(NamedTimeRange_::begin, NamedTimeRange_::end);
         qbNamedTimeRange.with(NamedTimeRange_::name.equals("green"));
         obx::Query<SensorValues> query = qbLink.build();  // Note: query object can be re-used (without its builder)
+
         StopWatch stopWatch;
         std::vector<std::unique_ptr<SensorValues>> result = query.find();
         std::cout << "Named time range query (linked) completed in " << stopWatch.durationForLog() << " ("
