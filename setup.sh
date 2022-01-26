@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-lib_version="0.12.0"
+lib_version="0.15.1"
 curl -s https://raw.githubusercontent.com/objectbox/objectbox-c/main/download.sh | bash /dev/stdin $lib_version
 ls -lhR download/
 echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"

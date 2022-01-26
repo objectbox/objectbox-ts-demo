@@ -49,7 +49,7 @@ int main(int argc, char* args[]) {
     std::cout << "ObjectBox TS demo using ObjectBox library " << obx_version_string()
               << " (core: " << obx_version_core_string() << ")" << std::endl;
 
-    if (!obx_supports_time_series()) {
+    if (!obx_has_feature(OBXFeature_TimeSeries)) {
         std::cout << "This time series demo requires ObjectBox TS, a special time series edition." << std::endl;
         std::cout << "To get ObjectBox TS, please visit https://objectbox.io/time-series-database/." << std::endl;
         exit(1);
