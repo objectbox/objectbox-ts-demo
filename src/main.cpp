@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ObjectBox Ltd. All rights reserved.
+ * Copyright 2022 ObjectBox Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
+
+#define OBX_CPP_FILE
 
 #include "StopWatch.h"
 #include "objectbox-model.h"
@@ -56,7 +58,7 @@ int main(int argc, char* args[]) {
     }
 
     // Init ObjectBox store and boxes
-    obx::Store::Options options(create_obx_model());
+    obx::Options options(create_obx_model());
     options.maxDbSizeInKb(10 * 1024 * 1024);  // 10 GB to allow data from several runs
     obx::Store store(options);
     obx::Box<NamedTimeRange> boxNTR(store);
