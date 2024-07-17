@@ -36,7 +36,7 @@
 #include <optional>
 #endif
 
-static_assert(OBX_VERSION_MAJOR == 0 && OBX_VERSION_MINOR == 20 && OBX_VERSION_PATCH == 0,  // NOLINT
+static_assert(OBX_VERSION_MAJOR == 4 && OBX_VERSION_MINOR == 0 && OBX_VERSION_PATCH == 1,  // NOLINT
               "Versions of objectbox.h and objectbox.hpp files do not match, please update");
 
 #ifdef __clang__
@@ -349,12 +349,14 @@ public:
     }
 
     /// Set the store directory on the options. The default is "objectbox".
+    /// Use the prefix "memory:" to open an in-memory database, e.g. "memory:myApp" (see docs for details).
     Options& directory(const char* dir) {
         internal::checkErrOrThrow(obx_opt_directory(opt, dir));
         return *this;
     }
 
     /// Set the store directory on the options. The default is "objectbox".
+    /// Use the prefix "memory:" to open an in-memory database, e.g. "memory:myApp" (see docs for details).
     Options& directory(const std::string& dir) { return directory(dir.c_str()); }
 
     /// Gets the option for "directory"; this is either the default, or, the value set by directory().
@@ -623,6 +625,32 @@ public:
         obx_opt_backup_restore(opt, backupFile, flags);
         return *this;
     }
+
+    /// Enables Write-ahead logging (WAL); for now this is only supported for in-memory DBs.
+    /// @param flags WAL itself is enabled by setting flag OBXWalFlags_EnableWal (also the default parameter value).
+    ///        Combine with other flags using bitwise OR or switch off WAL by passing 0.
+    Options& wal(uint32_t flags = OBXWalFlags_EnableWal) {
+        obx_opt_wal(opt, flags);
+        return *this;
+    }
+
+    /// The WAL file gets consolidated when it reached this size limit when opening the database.
+    /// This setting is meant for applications that prefer to consolidate on startup,
+    /// which may avoid consolidations on commits while the application is running.
+    /// The default is 4096 (4 MB).
+    Options& walMaxFileSizeOnOpenInKb(uint64_t size_in_kb) {
+        obx_opt_wal_max_file_size_on_open_in_kb(opt, size_in_kb);
+        return *this;
+    }
+
+    /// The WAL file gets consolidated when it reaches this size limit after a commit.
+    /// As consolidation takes some time, it is a trade-off between accumulating enough data
+    /// and the time the consolidation takes (longer with more data).
+    /// The default is 16384 (16 MB).
+    Options& walMaxFileSizeInKb(uint64_t size_in_kb) {
+        obx_opt_wal_max_file_size_in_kb(opt, size_in_kb);
+        return *this;
+    }
 };
 
 /// Transactions can be started in read (only) or write mode.
@@ -715,7 +743,18 @@ public:
     /// @returns non-zero ID for the Store
     uint64_t id() const;
 
+    /// Get Store type
+    /// @return One of ::OBXStoreTypeId
     uint32_t getStoreTypeId() { return obx_store_type_id(cPtr()); }
+
+    /// Get the size of the store. For a disk-based store type, this corresponds to the size on disk, and for the
+    /// in-memory store type, this is roughly the used memory bytes occupied by the data.
+    /// @return the size in bytes of the database, or 0 if the file does not exist or some error occurred.
+    uint64_t getDbSize() const { return obx_store_size(cPtr()); }
+
+    /// The size in bytes occupied by the database on disk (if any).
+    /// @returns 0 if the underlying database is in-memory only, or the size could not be determined.
+    uint64_t getDbSizeOnDisk() const { return obx_store_size_on_disk(cPtr()); }
 
     template <class EntityBinding>
     Box<EntityBinding> box() {
@@ -1023,15 +1062,31 @@ public:
     }
 };
 
-/// Collects all visited data
+/// Collects all visited data; returns a vector of plain objects.
 template <typename EntityT>
 struct CollectingVisitor {
+    std::vector<EntityT> items;
+
+    static bool visit(const void* data, size_t size, void* userData) {
+        CollectingVisitor<EntityT>* self = static_cast<CollectingVisitor<EntityT>*>(userData);
+        assert(self);
+        self->items.emplace_back();
+        EntityT::_OBX_MetaInfo::fromFlatBuffer(data, size, self->items.back());
+        return true;
+    }
+};
+
+/// Collects all visited data; returns a vector of unique_ptr of objects.
+template <typename EntityT>
+struct CollectingVisitorUniquePtr {
     std::vector<std::unique_ptr<EntityT>> items;
 
     static bool visit(const void* data, size_t size, void* userData) {
-        auto self = static_cast<CollectingVisitor<EntityT>*>(userData);
+        CollectingVisitorUniquePtr<EntityT>* self = static_cast<CollectingVisitorUniquePtr<EntityT>*>(userData);
+        assert(self);
         self->items.emplace_back(new EntityT());
-        EntityT::_OBX_MetaInfo::fromFlatBuffer(data, size, *(self->items.back()));
+        std::unique_ptr<EntityT>& ptrRef = self->items.back();
+        EntityT::_OBX_MetaInfo::fromFlatBuffer(data, size, *ptrRef);
         return true;
     }
 };
@@ -1893,6 +1948,23 @@ public:
         return *this;
     }
 
+    /// Performs an approximate nearest neighbor (ANN) search to find objects near to the given query_vector.
+    /// This requires the vector property to have a HNSW index.
+    /// @param vectorPropertyId the vector property ID of the entity
+    /// @param queryVector the query vector; its dimensions should be at least the dimensions of the vector property.
+    /// @param maxResultCount maximum number of objects to return by the ANN condition.
+    ///        Hint: it can also be used as the "ef" HNSW parameter to increase the search quality in combination with a
+    ///        query limit.
+    ///        For example, use 100 here with a query limit of 10 to have 10 results that are of potentially better
+    ///        quality than just passing in 10 here (quality/performance tradeoff).
+    QueryBuilderBase& nearestNeighborsFloat32(obx_schema_id vectorPropertyId, const float* queryVector,
+                                              size_t maxResultCount) {
+        obx_qb_cond condition =
+            obx_qb_nearest_neighbors_f32(cQueryBuilder_, vectorPropertyId, queryVector, maxResultCount);
+        if (condition == 0) internal::throwLastError();
+        return *this;
+    }
+
     /// Once all conditions have been applied, build the query using this method to actually run it.
     QueryBase buildBase();
 };
@@ -1990,6 +2062,21 @@ public:
         return linkedQB<RelSourceEntityT>(obx_qb_backlink_standalone(cPtr(), rel.id()));
     }
 
+    /// Performs an approximate nearest neighbor (ANN) search to find objects near to the given query vector.
+    /// This requires the vector property to have a HNSW index.
+    /// @param vectorProperty the vector property ID of the entity
+    /// @param queryVector the query vector; its dimensions should be at least the dimensions of the vector property.
+    /// @param maxResultCount maximum number of objects to return by the ANN condition.
+    ///        Hint: it can also be used as the "ef" HNSW parameter to increase the search quality in combination with a
+    ///        query limit.
+    ///        For example, use 100 here with a query limit of 10 to have 10 results that are of potentially better
+    ///        quality than just passing in 10 here (quality/performance tradeoff).
+    QueryBuilder& nearestNeighborsFloat32(Property<EntityT, OBXPropertyType_FloatVector> vectorProperty,
+                                          const float* queryVector, size_t maxResultCount) {
+        QueryBuilderBase::nearestNeighborsFloat32(vectorProperty.id(), queryVector, maxResultCount);
+        return *this;
+    }
+
     /// Once all conditions have been applied, build the query using this method to actually run it.
     Query<EntityT> build();
 
@@ -2046,7 +2133,52 @@ public:
     }
 
     /// Returns IDs of all matching objects.
+    /// Note: if no order conditions is present, the order is arbitrary
+    ///       (sometimes ordered by ID, but never guaranteed to).
     std::vector<obx_id> findIds() { return internal::idVectorOrThrow(obx_query_find_ids(cQuery_)); }
+
+    /// Find object IDs matching the query associated to their query score (e.g. distance in NN search).
+    /// The resulting vector is sorted by score in ascending order (unlike findIds()).
+    std::vector<std::pair<obx_id, double>> findIdsWithScores() {
+        OBX_VERIFY_STATE(cQuery_);
+
+        OBX_id_score_array* cResult = obx_query_find_ids_with_scores(cQuery_);
+        if (!cResult) internal::throwLastError();
+
+        std::vector<std::pair<obx_id, double>> result(cResult->count);
+        for (size_t i = 0; i < cResult->count; ++i) {
+            std::pair<obx_id, double>& entry = result[i];
+            const OBX_id_score& idScore = cResult->ids_scores[i];
+            entry.first = idScore.id;
+            entry.second = idScore.score;
+        }
+
+        obx_id_score_array_free(cResult);
+
+        return result;
+    }
+
+    /// Find object IDs matching the query ordered by their query score (e.g. distance in NN search).
+    /// The resulting array is sorted by score in ascending order (unlike findIds()).
+    /// Unlike findIdsWithScores(), this method returns a simple vector of IDs without scores.
+    std::vector<obx_id> findIdsByScore() { return internal::idVectorOrThrow(obx_query_find_ids_by_score(cQuery_)); }
+
+    /// Walk over matching objects one-by-one using the given data visitor (C-style callback function with user data).
+    /// Note: if no order conditions is present, the order is arbitrary (sometimes ordered by ID, but never guaranteed
+    /// to).
+    void visit(obx_data_visitor* visitor, void* userData) {
+        OBX_VERIFY_STATE(cQuery_);
+        obx_err err = obx_query_visit(cQuery_, visitor, userData);
+        internal::checkErrOrThrow(err);
+    }
+
+    /// Walk over matching objects one-by-one using the given data visitor (C-style callback function with user data).
+    /// Note: the elements are ordered by the score.
+    void visitWithScore(obx_data_score_visitor* visitor, void* userData) {
+        OBX_VERIFY_STATE(cQuery_);
+        obx_err err = obx_query_visit_with_score(cQuery_, visitor, userData);
+        internal::checkErrOrThrow(err);
+    }
 
     /// Returns the number of matching objects.
     uint64_t count() {
@@ -2102,14 +2234,43 @@ public:
     }
 
     /// Finds all objects matching the query.
-    /// Note: returning a vector of pointers to avoid excessive allocation because we don't know the number of returned
-    /// objects beforehand.
-    std::vector<std::unique_ptr<EntityT>> find() {
+    /// @return a vector of objects
+    std::vector<EntityT> find() {
         OBX_VERIFY_STATE(cQuery_);
 
         CollectingVisitor<EntityT> visitor;
         obx_query_visit(cQuery_, CollectingVisitor<EntityT>::visit, &visitor);
         return std::move(visitor.items);
+    }
+
+    /// Finds all objects matching the query.
+    /// @return a vector of unique_ptr of the resulting objects
+    std::vector<std::unique_ptr<EntityT>> findUniquePtrs() {
+        OBX_VERIFY_STATE(cQuery_);
+
+        CollectingVisitorUniquePtr<EntityT> visitor;
+        obx_query_visit(cQuery_, CollectingVisitorUniquePtr<EntityT>::visit, &visitor);
+        return std::move(visitor.items);
+    }
+
+    /// Find objects matching the query associated to their query score (e.g. distance in NN search).
+    /// The resulting vector is sorted by score in ascending order (unlike find()).
+    std::vector<std::pair<EntityT, double>> findWithScores() {
+        OBX_VERIFY_STATE(cQuery_);
+
+        OBX_bytes_score_array* cResult = obx_query_find_with_scores(cQuery_);
+
+        std::vector<std::pair<EntityT, double>> result(cResult->count);
+        for (int i = 0; i < cResult->count; ++i) {
+            std::pair<EntityT, double>& entry = result[i];
+            const OBX_bytes_score& bytesScore = cResult->bytes_scores[i];
+            EntityT::_OBX_MetaInfo::fromFlatBuffer(bytesScore.data, bytesScore.size, entry.first);
+            entry.second = bytesScore.score;
+        }
+
+        obx_bytes_score_array_free(cResult);
+
+        return result;
     }
 
     /// Find the first object matching the query or nullptr if none matches.
@@ -2252,6 +2413,22 @@ public:
     Query& setParameter(Property<PropertyEntityT, OBXPropertyType_ByteVector> property,
                         const std::vector<uint8_t>& value) {
         return setParameter(property, value.data(), value.size());
+    }
+
+    template <typename PropertyEntityT>
+    Query& setParameter(Property<PropertyEntityT, OBXPropertyType_FloatVector> property, const float* value,
+                        size_t element_count) {
+        obx_err err =
+            obx_query_param_vector_float32(cQuery_, entityId<PropertyEntityT>(), property.id(), value, element_count);
+        internal::checkErrOrThrow(err);
+        return *this;
+    }
+
+    template <typename PropertyEntityT>
+    Query& setParameter(Property<PropertyEntityT, OBXPropertyType_FloatVector> property,
+                        const std::vector<float>& vector) {
+        setParameter(property, vector.data(), vector.size());
+        return *this;
     }
 
 private:
@@ -3014,8 +3191,26 @@ struct AsyncTreePutResult {
     [[noreturn]] void throwException() { internal::throwError(status, "Async tree put failed: " + errorMessage); }
 };
 
-using AsyncTreePutCallback = std::function<void(const AsyncTreePutResult& result)>;
+struct AsyncTreeGetResult {
+    std::string path;  ///< Path of leaf
+    obx_err status;    ///< OBX_SUCCESS or OBX_NOT_FOUND if operation did not succeed
 
+    obx_id id;                ///< ID of the leaf that was get if operation succeeded or 0 if not found
+    OBX_bytes leaf_data;      ///< Leaf data if operation succeeded
+    OBX_bytes leaf_metadata;  ///< Leaf metadata if operation succeeded
+
+    std::string errorMessage;  ///< Non-empty if an error occurred (result is "Undefined")
+
+    ///@returns true if the operation was successful.
+    inline bool isSuccess() { return status == OBX_SUCCESS; }
+
+    /// Alternative to checking error codes: throw an exception instead.
+    /// Note that this will always throw, so you should at least check for a successful outcome, e.g. via isSuccess().
+    [[noreturn]] void throwException() { internal::throwError(status, "Async tree get failed: " + errorMessage); }
+};
+
+using AsyncTreePutCallback = std::function<void(const AsyncTreePutResult& result)>;
+using AsyncTreeGetCallback = std::function<void(const AsyncTreeGetResult& result)>;
 /// @brief Top level tree API representing a tree structure/schema associated with a store.
 ///
 /// Data is accessed via TreeCursor.
@@ -3055,6 +3250,17 @@ public:
 
     /// Returns the leaf name of the given path (the string component after the last path delimiter).
     std::string getLeafName(const std::string& path) const;
+
+    /// \brief A get operation for a tree leaf,
+    /// @param withMetadata Flag if the callback also wants to receive the metadata (also as raw FlatBuffers).
+    /// @param callback Once the operation has completed (successfully or not), the callback is called with
+    ///        AsyncTreeGetResult.
+    void getAsync(const char* path, bool withMetadata, AsyncTreeGetCallback callback);
+
+    /// Like getAsync(), but the callback uses a C function ptr and user data instead of a std::function wrapper.
+    /// @param withMetadata Flag if the callback also wants to receive the metadata (also as raw FlatBuffers).
+    void getAsyncRawCallback(const char* path, bool withMetadata, obx_tree_async_get_callback* callback,
+                             void* callback_user_data = nullptr);
 
     /// \brief A "low-level" put operation for a tree leaf using given raw FlatBuffer bytes.
     /// Any non-existing branches and meta nodes are put on the fly if an optional meta-leaf FlatBuffers is given.
@@ -3127,6 +3333,12 @@ void Tree::putAsyncRawCallback(const char* path, void* data, size_t size, OBXPro
     internal::checkErrOrThrow(err);
 }
 
+void Tree::getAsyncRawCallback(const char* path, bool withMetadata, obx_tree_async_get_callback* callback,
+                               void* callback_user_data) {
+    obx_err err = obx_tree_async_get_raw(cTree_, path, withMetadata, callback, callback_user_data);
+    internal::checkErrOrThrow(err);
+}
+
 namespace {
 void cCallbackTrampolineAsyncTreePut(obx_err status, obx_id id, void* userData) {
     assert(userData);
@@ -3134,6 +3346,17 @@ void cCallbackTrampolineAsyncTreePut(obx_err status, obx_id id, void* userData) 
     std::string errorMessage;
     if (status != OBX_SUCCESS) internal::appendLastErrorText(status, errorMessage);
     AsyncTreePutResult result{internal::mapErrorToTreePutResult(status), status, id, std::move(errorMessage)};
+    (*callback)(result);
+}
+void cCallbackTrampolineAsyncTreeGet(obx_err status, obx_id id, const char* path, const void* leaf_data,
+                                     size_t leaf_data_size, const void* leaf_metadata, size_t leaf_metadata_size,
+                                     void* userData) {
+    assert(userData);
+    std::unique_ptr<AsyncTreeGetCallback> callback(static_cast<AsyncTreeGetCallback*>(userData));
+    std::string errorMessage;
+    if (status != OBX_SUCCESS) internal::appendLastErrorText(status, errorMessage);
+    AsyncTreeGetResult result{
+        path, status, id, {leaf_data, leaf_data_size}, {leaf_metadata, leaf_metadata_size}, std::move(errorMessage)};
     (*callback)(result);
 }
 }  // namespace
@@ -3151,6 +3374,14 @@ void Tree::putAsync(const char* path, void* data, size_t size, OBXPropertyType t
 
 void Tree::consolidateNodeConflictsAsync() {
     obx_err err = obx_tree_async_consolidate_node_conflicts(cTree_);
+    internal::checkErrOrThrow(err);
+}
+
+void Tree::getAsync(const char* path, bool withMetadata,
+                    std::function<void(const AsyncTreeGetResult& result)> callback) {
+    auto funPtr = new std::function<void(const AsyncTreeGetResult&)>(std::move(callback));
+    obx_tree_async_get_callback* cCallback = cCallbackTrampolineAsyncTreeGet;
+    obx_err err = obx_tree_async_get_raw(cTree_, path, withMetadata, cCallback, funPtr);
     internal::checkErrOrThrow(err);
 }
 
