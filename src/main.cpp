@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 ObjectBox Ltd. All rights reserved.
+ * Copyright 2022-2024 ObjectBox Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@
 #include <iomanip>
 #include <iostream>
 
-#define OBX_CPP_FILE
+#define OBX_CPP_FILE  // This makes objectbox.hpp emit the definitions (C++ API implementation; needed once per project)
 
-#include "StopWatch.h"
 #include "objectbox-model.h"
 #include "objectbox.hpp"
 #include "ts-data-model.obx.hpp"
+#include "util/StopWatch.h"
 
 using namespace objectbox;          // util
 using namespace objectbox::tsdemo;  // our generated code
@@ -155,7 +155,7 @@ void buildAndRunQueries(obx::Box<SensorValues>& box, int64_t start) {
         qbRange.with(SensorValues_::time.between(start + 1000, start + 1999));
         obx::Query<SensorValues> query = qbRange.build();  // Note: query object can be re-used (without its builder)
         StopWatch stopWatch;
-        std::vector<std::unique_ptr<SensorValues>> result = query.find();
+        std::vector<std::unique_ptr<SensorValues>> result = query.findUniquePtrs();
         std::cout << "Time range query completed in " << stopWatch.durationForLog() << " (" << result.size()
                   << " resulting objects)" << std::endl;
     }
@@ -169,7 +169,7 @@ void buildAndRunQueries(obx::Box<SensorValues>& box, int64_t start) {
         obx::Query<SensorValues> query = qbLink.build();  // Note: query object can be re-used (without its builder)
 
         StopWatch stopWatch;
-        std::vector<std::unique_ptr<SensorValues>> result = query.find();
+        std::vector<std::unique_ptr<SensorValues>> result = query.findUniquePtrs();
         std::cout << "Named time range query (linked) completed in " << stopWatch.durationForLog() << " ("
                   << result.size() << " resulting objects)" << std::endl;
     }

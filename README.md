@@ -11,7 +11,7 @@ Run the TS Demo
 **In order to run this demo, you need to get the [ObjectBox TS library from objectbox.io](https://objectbox.io/time-series-database/).**
 The [CMake build build](CMakeLists.txt) expects the library (e.g. libobjectbox.so) in `lib/` in the project directory.
 
-If you do not have the TS library yet, you can test the build with the standard (non-TS) ObjectBox library by running `./setup.sh`.
+If you do not have the TS library yet, you can still build the project with the standard (non-TS) ObjectBox library.
 
 At this point you should be able to run the demo in a CMake aware IDE.
 Or, if you prefer the command line, run these commands to build and run the demo:
@@ -140,7 +140,7 @@ Here are some screenshots to give you a first impression:
 
 License
 -------
-    Copyright 2021 ObjectBox Ltd. All rights reserved.
+    Copyright 2021-2024 ObjectBox Ltd. All rights reserved.
     
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

@@ -7,42 +7,45 @@ const obx::Property<objectbox::tsdemo::NamedTimeRange, OBXPropertyType_Date> obj
 const obx::Property<objectbox::tsdemo::NamedTimeRange, OBXPropertyType_Date> objectbox::tsdemo::NamedTimeRange_::end(3);
 const obx::Property<objectbox::tsdemo::NamedTimeRange, OBXPropertyType_String> objectbox::tsdemo::NamedTimeRange_::name(4);
 
-void objectbox::tsdemo::NamedTimeRange_::toFlatBuffer(flatbuffers::FlatBufferBuilder& fbb, const objectbox::tsdemo::NamedTimeRange& object) {
+void objectbox::tsdemo::NamedTimeRange::_OBX_MetaInfo::toFlatBuffer(flatbuffers::FlatBufferBuilder& fbb, const objectbox::tsdemo::NamedTimeRange& object) {
     fbb.Clear();
     auto offsetname = fbb.CreateString(object.name);
     flatbuffers::uoffset_t fbStart = fbb.StartTable();
-    fbb.TrackField(4, fbb.PushElement<uint64_t>(object.id));
-    fbb.TrackField(6, fbb.PushElement<int64_t>(object.begin));
-    fbb.TrackField(8, fbb.PushElement<int64_t>(object.end));
+    fbb.AddElement(4, object.id);
+    fbb.AddElement(6, object.begin);
+    fbb.AddElement(8, object.end);
     fbb.AddOffset(10, offsetname);
     flatbuffers::Offset<flatbuffers::Table> offset;
     offset.o = fbb.EndTable(fbStart);
     fbb.Finish(offset);
 }
 
-objectbox::tsdemo::NamedTimeRange objectbox::tsdemo::NamedTimeRange_::fromFlatBuffer(const void* data, size_t size) {
+objectbox::tsdemo::NamedTimeRange objectbox::tsdemo::NamedTimeRange::_OBX_MetaInfo::fromFlatBuffer(const void* data, size_t size) {
     objectbox::tsdemo::NamedTimeRange object;
     fromFlatBuffer(data, size, object);
     return object;
 }
 
-std::unique_ptr<objectbox::tsdemo::NamedTimeRange> objectbox::tsdemo::NamedTimeRange_::newFromFlatBuffer(const void* data, size_t size) {
+std::unique_ptr<objectbox::tsdemo::NamedTimeRange> objectbox::tsdemo::NamedTimeRange::_OBX_MetaInfo::newFromFlatBuffer(const void* data, size_t size) {
     auto object = std::unique_ptr<objectbox::tsdemo::NamedTimeRange>(new objectbox::tsdemo::NamedTimeRange());
     fromFlatBuffer(data, size, *object);
     return object;
 }
 
-void objectbox::tsdemo::NamedTimeRange_::fromFlatBuffer(const void* data, size_t, objectbox::tsdemo::NamedTimeRange& outObject) {
+void objectbox::tsdemo::NamedTimeRange::_OBX_MetaInfo::fromFlatBuffer(const void* data, size_t, objectbox::tsdemo::NamedTimeRange& outObject) {
     const auto* table = flatbuffers::GetRoot<flatbuffers::Table>(data);
     assert(table);
-    outObject.id = table->GetField<uint64_t>(4, 0);
+    outObject.id = table->GetField<obx_id>(4, 0);
     outObject.begin = table->GetField<int64_t>(6, 0);
     outObject.end = table->GetField<int64_t>(8, 0);
     {
         auto* ptr = table->GetPointer<const flatbuffers::String*>(10);
-        if (ptr) outObject.name.assign(ptr->c_str());
+        if (ptr) {
+            outObject.name.assign(ptr->c_str(), ptr->size());
+        } else {
+            outObject.name.clear();
+        }
     }
-    
 }
 
 const obx::Property<objectbox::tsdemo::SensorValues, OBXPropertyType_Long> objectbox::tsdemo::SensorValues_::id(1);
@@ -55,39 +58,39 @@ const obx::Property<objectbox::tsdemo::SensorValues, OBXPropertyType_Double> obj
 const obx::Property<objectbox::tsdemo::SensorValues, OBXPropertyType_Double> objectbox::tsdemo::SensorValues_::loadCpu3(8);
 const obx::Property<objectbox::tsdemo::SensorValues, OBXPropertyType_Double> objectbox::tsdemo::SensorValues_::loadCpu4(9);
 
-void objectbox::tsdemo::SensorValues_::toFlatBuffer(flatbuffers::FlatBufferBuilder& fbb, const objectbox::tsdemo::SensorValues& object) {
+void objectbox::tsdemo::SensorValues::_OBX_MetaInfo::toFlatBuffer(flatbuffers::FlatBufferBuilder& fbb, const objectbox::tsdemo::SensorValues& object) {
     fbb.Clear();
     flatbuffers::uoffset_t fbStart = fbb.StartTable();
-    fbb.TrackField(4, fbb.PushElement<uint64_t>(object.id));
-    fbb.TrackField(6, fbb.PushElement<int64_t>(object.time));
-    fbb.TrackField(8, fbb.PushElement<double>(object.temperatureOutside));
-    fbb.TrackField(10, fbb.PushElement<double>(object.temperatureInside));
-    fbb.TrackField(12, fbb.PushElement<double>(object.temperatureCpu));
-    fbb.TrackField(14, fbb.PushElement<double>(object.loadCpu1));
-    fbb.TrackField(16, fbb.PushElement<double>(object.loadCpu2));
-    fbb.TrackField(18, fbb.PushElement<double>(object.loadCpu3));
-    fbb.TrackField(20, fbb.PushElement<double>(object.loadCpu4));
+    fbb.AddElement(4, object.id);
+    fbb.AddElement(6, object.time);
+    fbb.AddElement(8, object.temperatureOutside);
+    fbb.AddElement(10, object.temperatureInside);
+    fbb.AddElement(12, object.temperatureCpu);
+    fbb.AddElement(14, object.loadCpu1);
+    fbb.AddElement(16, object.loadCpu2);
+    fbb.AddElement(18, object.loadCpu3);
+    fbb.AddElement(20, object.loadCpu4);
     flatbuffers::Offset<flatbuffers::Table> offset;
     offset.o = fbb.EndTable(fbStart);
     fbb.Finish(offset);
 }
 
-objectbox::tsdemo::SensorValues objectbox::tsdemo::SensorValues_::fromFlatBuffer(const void* data, size_t size) {
+objectbox::tsdemo::SensorValues objectbox::tsdemo::SensorValues::_OBX_MetaInfo::fromFlatBuffer(const void* data, size_t size) {
     objectbox::tsdemo::SensorValues object;
     fromFlatBuffer(data, size, object);
     return object;
 }
 
-std::unique_ptr<objectbox::tsdemo::SensorValues> objectbox::tsdemo::SensorValues_::newFromFlatBuffer(const void* data, size_t size) {
+std::unique_ptr<objectbox::tsdemo::SensorValues> objectbox::tsdemo::SensorValues::_OBX_MetaInfo::newFromFlatBuffer(const void* data, size_t size) {
     auto object = std::unique_ptr<objectbox::tsdemo::SensorValues>(new objectbox::tsdemo::SensorValues());
     fromFlatBuffer(data, size, *object);
     return object;
 }
 
-void objectbox::tsdemo::SensorValues_::fromFlatBuffer(const void* data, size_t, objectbox::tsdemo::SensorValues& outObject) {
+void objectbox::tsdemo::SensorValues::_OBX_MetaInfo::fromFlatBuffer(const void* data, size_t, objectbox::tsdemo::SensorValues& outObject) {
     const auto* table = flatbuffers::GetRoot<flatbuffers::Table>(data);
     assert(table);
-    outObject.id = table->GetField<uint64_t>(4, 0);
+    outObject.id = table->GetField<obx_id>(4, 0);
     outObject.time = table->GetField<int64_t>(6, 0);
     outObject.temperatureOutside = table->GetField<double>(8, 0.0);
     outObject.temperatureInside = table->GetField<double>(10, 0.0);
@@ -96,6 +99,5 @@ void objectbox::tsdemo::SensorValues_::fromFlatBuffer(const void* data, size_t, 
     outObject.loadCpu2 = table->GetField<double>(16, 0.0);
     outObject.loadCpu3 = table->GetField<double>(18, 0.0);
     outObject.loadCpu4 = table->GetField<double>(20, 0.0);
-    
 }
 
