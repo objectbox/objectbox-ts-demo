@@ -14,15 +14,16 @@ add_executable(${PROJECT_NAME}
 
 # Fetch ObjectBox for the includes, ObjectBox Generator and the non-TS library (as a fallback)
 include(FetchContent)
+#set(ObjectBoxGenerator_CMAKE_VERSION dev)
 FetchContent_Declare(
         objectbox
         GIT_REPOSITORY https://github.com/objectbox/objectbox-c.git
-        GIT_TAG v4.0.2
+        GIT_TAG v4.3.0
 )
 FetchContent_MakeAvailable(objectbox)
 
 # By fetching ObjectBox, we can also use the ObjectBoxGenerator package via CMake:
-find_package(ObjectBoxGenerator 4.0.0 REQUIRED)
+find_package(ObjectBoxGenerator REQUIRED)
 add_obx_schema(TARGET ${PROJECT_NAME}
         SCHEMA_FILES ts-data-model.fbs
         CXX_STANDARD 11
